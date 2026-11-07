@@ -1,0 +1,27 @@
+const E=require('../src/engine.js');
+const t=(s)=>{try{const q=E.parseEquation(s);return q.left.map(x=>x.coef+'·'+x.sp.key).join(' ')+' => '+q.right.map(x=>x.coef+'·'+x.sp.key).join(' ');}catch(e){return 'ERR '+e.message}};
+for(const s of ['Cu+Ag^+ -> Cu^2+ + Ag','H+ + e- -> H2','MnO4- + 8H+ + 5e- → Mn2+ + 4H2O','Fe³⁺ + e⁻ → Fe²⁺','Cr2O7^2- + 14 H^+ -> 2Cr^3+ + 7 H2O(l)','2 Ag + Cu^2+(aq) = 2Ag^+ + Cu','co + O2 -> CO2','Cu + -> Cu','Fe^+3 + e- -> Fe^+2'])console.log(s.padEnd(45),t(s));
+const p=E.solveProblem('MnO4^- + Fe^2+ -> Mn^2+ + Fe^3+','acidic');
+const show=(lab,r)=>console.log(lab.padEnd(50),r.ok?'OK '+(r.note||''):r.msgs.map(m=>m.kind+': '+m.text).join(' | '));
+show('red s3 MnO4- -> Mn2+',E.checkHalf('MnO4^- -> Mn^2+',p.redHalf,3));
+show('red s3 with H2O',E.checkHalf('MnO4^- -> Mn^2+ + 4H2O',p.redHalf,3));
+show('red s4 no water',E.checkHalf('MnO4^- -> Mn^2+',p.redHalf,4));
+show('red s4 ok',E.checkHalf('MnO4^- -> Mn^2+ + 4H2O',p.redHalf,4));
+show('red s5 ok',E.checkHalf('MnO4^- + 8H^+ -> Mn^2+ + 4H2O',p.redHalf,5));
+show('red s6 wrong e side',E.checkHalf('MnO4^- + 8H^+ -> Mn^2+ + 4H2O + 5e^-',p.redHalf,6));
+show('red s6 wrong count',E.checkHalf('MnO4^- + 8H^+ + 3e^- -> Mn^2+ + 4H2O',p.redHalf,6));
+show('red s6 ok',E.checkHalf('MnO4^- + 8H^+ + 5e^- -> Mn^2+ + 4H2O',p.redHalf,6));
+show('red s6 doubled',E.checkHalf('2MnO4^- + 16H^+ + 10e^- -> 2Mn^2+ + 8H2O',p.redHalf,6));
+show('ox Fe3+ typed Fe3+',E.checkHalf('Fe2+ -> Fe3+ + e-',p.oxHalf,6));
+show('overall ok',E.checkOverall('MnO4^- + 5Fe^2+ + 8H^+ -> Mn^2+ + 5Fe^3+ + 4H2O',p,'acidic'));
+show('overall doubled',E.checkOverall('2MnO4^- + 10Fe^2+ + 16H^+ -> 2Mn^2+ + 10Fe^3+ + 8H2O',p,'acidic'));
+show('overall unbal',E.checkOverall('MnO4^- + Fe^2+ + 8H^+ -> Mn^2+ + Fe^3+ + 4H2O',p,'acidic'));
+show('overall e left',E.checkOverall('MnO4^- + Fe^2+ + 8H^+ + 4e^- -> Mn^2+ + Fe^3+ + 4H2O',p,'acidic'));
+const b=E.solveProblem('MnO4^- + I^- -> MnO2 + I2','basic');
+show('basic w/ H+',E.checkOverall(b.acidText,b,'basic'));
+show('basic ok',E.checkOverall('2MnO4^- + 6I^- + 4H2O -> 2MnO2 + 3I2 + 8OH^-',b,'basic'));
+show('basic water both',E.checkOverall('2MnO4^- + 6I^- + 8H2O -> 2MnO2 + 3I2 + 8OH^- + 4H2O',b,'basic'));
+const d=E.solveProblem('H2O2 -> H2O + O2','acidic');
+show('h2o2 ox extra water',E.checkHalf('H2O2 + 2H2O -> 2O2 + 6H^+ + 6e^-',d.oxHalf,6));
+// ON
+console.log(E.parseONInput('+7'),E.parseONInput('-8/7'),E.parseONInput('2.5'),E.parseONInput('3+'),E.parseONInput('x'));

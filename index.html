@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Balancing Redox Reactions</title>
+<style>
+:root{
+  --ink:#1d2433; --muted:#5d6678; --line:#d9dee8; --bg:#f6f7fb; --card:#fff;
+  --ox:#c2561a; --oxbg:#fff3ea; --red:#1f5fbf; --redbg:#eaf2ff;
+  --ok:#1d7a46; --okbg:#e7f6ec; --bad:#b42318; --badbg:#fdecea; --hint:#7a5a00; --hintbg:#fff7db;
+  --accent:#3b3f99;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:16px;line-height:1.45}
+header{background:#fff;border-bottom:1px solid var(--line);padding:14px 24px 0}
+header h1{margin:0;font-size:22px}
+header .sub{color:var(--muted);font-size:14px;margin:2px 0 10px}
+nav.tabs{display:flex;gap:4px}
+nav.tabs button{border:1px solid transparent;border-bottom:none;background:none;padding:9px 16px;font-size:15px;cursor:pointer;border-radius:8px 8px 0 0;color:var(--muted)}
+nav.tabs button.active{background:var(--bg);border-color:var(--line);color:var(--ink);font-weight:600;margin-bottom:-1px}
+main{max-width:1150px;margin:0 auto;padding:20px 24px 60px}
+.tab{display:none}.tab.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.card h2{margin:0 0 8px;font-size:18px}
+.card h3{margin:14px 0 6px;font-size:16px}
+.step{position:relative}
+.step .num{display:inline-flex;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;align-items:center;justify-content:center;font-weight:700;margin-right:8px;font-size:14px}
+.step.locked{opacity:.45}
+.step.locked .body{display:none}
+.step.done .num{background:var(--ok)}
+.step h2{display:flex;align-items:center}
+.instr{color:var(--muted);margin:2px 0 10px}
+button.btn{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:7px;padding:7px 14px;font-size:14px;cursor:pointer}
+button.btn.secondary{background:#fff;color:var(--accent)}
+button.btn.small{padding:4px 10px;font-size:13px}
+button.btn:disabled{opacity:.5;cursor:default}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:16px;padding:5px 12px;cursor:pointer;font-size:14px}
+.chips button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chips .count{opacity:.7;font-size:12px;margin-left:4px}
+select,input[type=text],input[type=number]{font-size:15px;padding:6px 8px;border:1px solid #b9c0ce;border-radius:6px;font-family:inherit}
+input.eqin{width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;padding:8px 10px}
+input.eqin:disabled{background:#f2f3f6;color:#444}
+.preview{min-height:26px;margin:6px 0 2px;font-size:18px}
+.preview .lbl{font-size:12px;color:var(--muted);margin-right:6px}
+.eq{font-size:20px}
+.eq .arrow{margin:0 .4em}
+.eq .plus{margin:0 .25em}
+.state{font-size:.7em;color:var(--muted)}
+sub,sup{font-size:.68em}
+.problem{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#fbfbfe;border:1px dashed #c8cde0;border-radius:8px;padding:10px 14px;margin:8px 0}
+.badge{display:inline-block;border-radius:12px;padding:2px 10px;font-size:13px;font-weight:600}
+.badge.acidic{background:#fde8e8;color:#9b1c1c}
+.badge.basic{background:#e3eefc;color:#1e4f9a}
+.badge.lvl{background:#eee;color:#444}
+.fb{margin-top:8px;border-radius:7px;padding:8px 12px;font-size:14.5px}
+.fb:empty{display:none}
+.fb.ok{background:var(--okbg);color:var(--ok)}
+.fb.bad{background:var(--badbg);color:var(--bad)}
+.fb.hint{background:var(--hintbg);color:var(--hint)}
+.fb ul{margin:4px 0 0;padding-left:20px}
+.fb .rule{margin-top:6px;color:var(--hint);background:var(--hintbg);border-radius:6px;padding:6px 10px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}
+table.inv{border-collapse:collapse;font-size:13.5px;margin-top:4px}
+table.inv th,table.inv td{border:1px solid var(--line);padding:2px 9px;text-align:center}
+table.inv th{background:#f3f4f8;font-weight:600}
+table.inv td.good{color:var(--ok);font-weight:700}
+table.inv td.badc{color:var(--bad);font-weight:700}
+table.inv tr.later td{color:#aab;font-weight:400}
+.invtoggle{font-size:13px;color:var(--muted)}
+table.on{border-collapse:collapse;margin:6px 0}
+table.on td{padding:5px 8px;border-bottom:1px solid #eef0f4;vertical-align:middle}
+table.on td.sp{font-size:19px;min-width:120px}
+.oncell{display:inline-flex;align-items:center;gap:4px;margin-right:12px}
+.oncell b{font-weight:600}
+.oncell input{width:62px;text-align:center}
+input.right{border-color:var(--ok);background:var(--okbg)}
+input.wrong{border-color:var(--bad);background:var(--badbg)}
+.idgrid{display:grid;grid-template-columns:200px 1fr;gap:8px 12px;align-items:center;margin-top:8px}
+.idgrid label{margin-right:12px;white-space:nowrap}
+.halves{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.halfcol{border-radius:9px;padding:10px 12px}
+.halfcol.ox{background:var(--oxbg);border:1px solid #f1c7a9}
+.halfcol.red{background:var(--redbg);border:1px solid #b9cff2}
+.halfcol h3{margin:0 0 6px}
+.halfcol.ox h3{color:var(--ox)}
+.halfcol.red h3{color:var(--red)}
+.substep{border-top:1px solid rgba(0,0,0,.08);padding:8px 0}
+.substep.future{color:#9aa1ae}
+.substep .t{font-weight:600;font-size:14.5px}
+.substep .done-eq{font-size:17px!important;margin-top:2px}
+.tick{color:var(--ok);font-weight:700;margin-left:4px}
+.multline{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:18px;flex-wrap:wrap}
+.multline input{width:64px}
+.final{font-size:24px;padding:10px 0}
+.donebox{background:var(--okbg);border:1px solid #a7dcb8;border-radius:10px;padding:14px 16px}
+.split2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.muted{color:var(--muted)}
+.small{font-size:13.5px}
+ol.method li{margin:4px 0}
+table.rules{border-collapse:collapse;width:100%;font-size:14.5px}
+table.rules td,table.rules th{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+table.rules th{background:#f3f4f8}
+table.worked{border-collapse:collapse;width:100%;font-size:15px}
+table.worked td{border-top:1px solid var(--line);padding:7px 8px;vertical-align:top}
+table.worked td:first-child{font-weight:600;width:210px;color:var(--muted)}
+table.worked .eq{font-size:17px}
+.oxt{color:var(--ox);font-weight:600}.redt{color:var(--red);font-weight:600}
+table.val{border-collapse:collapse;width:100%;font-size:14px;margin-top:8px}
+table.val td,table.val th{border:1px solid var(--line);padding:4px 8px;text-align:left}
+table.val tr.err td{background:var(--badbg)}
+code{background:#f0f1f5;padding:1px 5px;border-radius:4px;font-size:.92em}
+.score{font-size:14px;color:var(--muted)}
+.typing{font-size:14px}
+.typing td{padding:3px 10px 3px 0}
+.notice{background:#fffbe8;border:1px solid #f0dc9a;border-radius:8px;padding:8px 12px;font-size:14px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Balancing Redox Reactions</h1>
+  <div class="sub">The half-reaction method, in acidic and basic solution</div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="review">Review</button>
+    <button data-tab="coach" class="active">Coaching</button>
+    <button data-tab="test">Testing</button>
+    <button data-tab="instructor">Instructor</button>
+  </nav>
+</header>
+<main>
+  <section class="tab" id="tab-review"></section>
+  <section class="tab active" id="tab-coach">
+    <div class="card" id="coach-pick"></div>
+    <div id="coach-steps"></div>
+  </section>
+  <section class="tab" id="tab-test"></section>
+  <section class="tab" id="tab-instructor"></section>
+</main>
+<script>
+/* ===================== Redox engine =====================
+   Parser, oxidation numbers, half-reaction split, balancing.
+   No dependencies. Works in the browser and in node (for testing). */
+
+// ---------- Fractions ----------
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { const t = a % b; a = b; b = t; } return a; }
+function lcm(a, b) { return Math.abs(a * b) / (gcd(a, b) || 1); }
+function Fr(n, d = 1) { if (d < 0) { n = -n; d = -d; } const g = gcd(n, d) || 1; return { n: n / g, d: d / g }; }
+const fadd = (a, b) => Fr(a.n * b.d + b.n * a.d, a.d * b.d);
+const fsub = (a, b) => Fr(a.n * b.d - b.n * a.d, a.d * b.d);
+const fmul = (a, b) => Fr(a.n * b.n, a.d * b.d);
+const fdiv = (a, b) => Fr(a.n * b.d, a.d * b.n);
+const feq = (a, b) => a.n === b.n && a.d === b.d;
+function fstr(a) {
+  if (a.n === 0) return '0';
+  const s = a.n > 0 ? '+' : '−';
+  return a.d === 1 ? s + Math.abs(a.n) : s + Math.abs(a.n) + '/' + a.d;
+}
+
+// ---------- Elements ----------
+const ELEMENT_LIST = ('H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr ' +
+  'Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os ' +
+  'Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu').split(' ');
+const ELEMENT_SET = new Set(ELEMENT_LIST);
+const EN = { H: 2.20, Li: .98, Be: 1.57, B: 2.04, C: 2.55, N: 3.04, O: 3.44, F: 3.98, Na: .93, Mg: 1.31, Al: 1.61, Si: 1.90,
+  P: 2.19, S: 2.58, Cl: 3.16, K: .82, Ca: 1.00, Sc: 1.36, Ti: 1.54, V: 1.63, Cr: 1.66, Mn: 1.55, Fe: 1.83, Co: 1.88, Ni: 1.91,
+  Cu: 1.90, Zn: 1.65, Ga: 1.81, Ge: 2.01, As: 2.18, Se: 2.55, Br: 2.96, Kr: 3.0, Rb: .82, Sr: .95, Mo: 2.16, Ag: 1.93,
+  Cd: 1.69, Sn: 1.96, Sb: 2.05, Te: 2.1, I: 2.66, Xe: 2.6, Cs: .79, Ba: .89, Ce: 1.12, W: 2.36, Pt: 2.28, Au: 2.54,
+  Hg: 2.00, Tl: 1.62, Pb: 2.33, Bi: 2.02, U: 1.38, Pd: 2.20, Ru: 2.2 };
+const enOf = el => EN[el] ?? 1.5;
+const ANION = { N: -3, P: -3, As: -3, Sb: -3, O: -2, S: -2, Se: -2, Te: -2, F: -1, Cl: -1, Br: -1, I: -1, C: -4, Si: -4, H: -1 };
+const NONMETALS = new Set(['H', 'C', 'N', 'O', 'F', 'P', 'S', 'Cl', 'Se', 'Br', 'I', 'As', 'Te', 'He', 'Ne', 'Ar', 'Kr', 'Xe']);
+const ALKALI = new Set(['Li', 'Na', 'K', 'Rb', 'Cs']);
+const ALKEARTH = new Set(['Be', 'Mg', 'Ca', 'Sr', 'Ba']);
+
+// ---------- Text normalisation ----------
+const SUP = { '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9', '⁺': '+', '⁻': '-' };
+const SUB = { '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4', '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9' };
+function normalize(s) {
+  s = String(s).replace(/[−–—]/g, '-').replace(/[₀-₉]/g, c => SUB[c]);
+  s = s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]+/g, m => '^' + [...m].map(c => SUP[c]).join(''));
+  return s;
+}
+
+// ---------- Formula / species parsing ----------
+function parseFormula(s) {
+  let i = 0;
+  function readNum() { let m = ''; while (i < s.length && /\d/.test(s[i])) m += s[i++]; return m ? parseInt(m, 10) : 1; }
+  function group(depth) {
+    const comp = {};
+    while (i < s.length) {
+      const c = s[i];
+      if (c === '(' || c === '[') {
+        i++;
+        const inner = group(depth + 1);
+        if (s[i] !== ')' && s[i] !== ']') throw new Error(`A parenthesis isn't closed in "${s}".`);
+        i++;
+        const n = readNum();
+        for (const e in inner) comp[e] = (comp[e] || 0) + inner[e] * n;
+      } else if (c === ')' || c === ']') {
+        if (depth === 0) throw new Error(`Extra ")" in "${s}".`);
+        break;
+      } else if (/[A-Z]/.test(c)) {
+        let sym = c; i++;
+        if (i < s.length && /[a-z]/.test(s[i])) { sym += s[i]; i++; }
+        if (!ELEMENT_SET.has(sym)) throw new Error(`"${sym}" in "${s}" is not an element symbol (check capital letters).`);
+        const n = readNum();
+        comp[sym] = (comp[sym] || 0) + n;
+      } else if (/[a-z]/.test(c)) {
+        throw new Error(`Element symbols start with a capital letter: check "${s}".`);
+      } else if (/\d/.test(c)) {
+        throw new Error(`A number in "${s}" isn't attached to an element.`);
+      } else {
+        throw new Error(`Unexpected character "${c}" in "${s}".`);
+      }
+    }
+    return comp;
+  }
+  const comp = group(0);
+  if (i < s.length) throw new Error(`Couldn't read "${s}".`);
+  if (!Object.keys(comp).length) throw new Error('Empty formula.');
+  return comp;
+}
+
+function compKey(comp, charge) {
+  return Object.keys(comp).sort().map(e => e + comp[e]).join('') + '|' + charge;
+}
+
+const KEY_E = 'e', KEY_H2O = 'H2O1|0', KEY_HP = 'H1|1', KEY_OH = 'H1O1|-1';
+
+function parseSpecies(raw) {
+  let t = normalize(raw).trim().replace(/\s*\((aq|s|l|g)\)\s*$/i, '').trim();
+  if (/^e\^?(-1|1-|-)$/.test(t)) return { text: 'e^-', electron: true, comp: {}, charge: -1, key: KEY_E };
+  let formula = t, charge = 0, ambiguous = null;
+  const k = t.lastIndexOf('^');
+  if (k >= 0) {
+    formula = t.slice(0, k);
+    const c = t.slice(k + 1).replace(/\s/g, '');
+    let num, sign, m;
+    if ((m = c.match(/^(\d*)([+-])$/))) { num = m[1]; sign = m[2]; }
+    else if ((m = c.match(/^([+-])(\d+)$/))) { sign = m[1]; num = m[2]; }
+    else throw new Error(`The charge "^${c}" should look like ^2+ or ^3- (number, then sign).`);
+    charge = (num ? parseInt(num, 10) : 1) * (sign === '-' ? -1 : 1);
+    if (charge === 0) throw new Error('A charge of 0 is written by leaving the charge off.');
+  } else {
+    const m = t.match(/^(.*?)([+-])$/);
+    if (m) {
+      formula = m[1]; charge = m[2] === '-' ? -1 : 1;
+      const d = formula.match(/^(.*[A-Za-z)\]])(\d+)$/);
+      if (d) ambiguous = d[1] + '^' + d[2] + m[2];
+    }
+  }
+  if (!formula.trim()) throw new Error(`"${raw}" has a charge but no formula.`);
+  if (/\s/.test(formula.trim())) throw new Error(`"${formula.trim()}" has a space inside it. Put " + " between species.`);
+  const comp = parseFormula(formula.trim());
+  return { text: t, comp, charge, key: compKey(comp, charge), ambiguous };
+}
+
+// split one side of an equation into terms. A "+" separates species when it has a space before it,
+// or when it is followed by a letter/digit (Cu+Ag^+). A "+" right after "^..." or followed by a space/end is a charge.
+function splitTerms(side) {
+  const terms = []; let cur = '';
+  for (let i = 0; i < side.length; i++) {
+    const ch = side[i];
+    if (ch !== '+') { cur += ch; continue; }
+    const prev = i > 0 ? side[i - 1] : ' ';
+    const next = i + 1 < side.length ? side[i + 1] : '';
+    const afterCaret = /\^\s*\d*$/.test(cur);
+    let isCharge;
+    if (/\s/.test(prev) || i === 0) isCharge = false;
+    else if (afterCaret) isCharge = true;
+    else if (next === '' || /\s/.test(next)) isCharge = true;
+    else isCharge = false;
+    if (isCharge) cur += ch; else { terms.push(cur); cur = ''; }
+  }
+  terms.push(cur);
+  return terms.map(s => s.trim());
+}
+
+function parseEquation(str) {
+  const s = normalize(str).trim();
+  if (!s) throw new Error('Type an equation.');
+  const parts = s.split(/\s*(?:<?-+>|→|⟶|⇒|=>|=)\s*/);
+  if (parts.length !== 2) throw new Error(parts.length < 2 ? 'Use -> (or →) between the left and right sides.' : 'Use only one arrow.');
+  const sides = parts.map((p, si) => {
+    if (!p.trim()) throw new Error(si === 0 ? 'The left side is empty.' : 'The right side is empty.');
+    const terms = splitTerms(p);
+    const out = [];
+    for (const term of terms) {
+      if (!term) throw new Error('There is an extra "+" sign.');
+      const m = term.match(/^(\d+)\s*(.+)$/);
+      let coef = 1, body = term;
+      if (m && !/^\d+$/.test(term)) { coef = parseInt(m[1], 10); body = m[2]; }
+      if (/^\d*\/\d+/.test(term)) throw new Error('Use whole-number coefficients, not fractions.');
+      if (coef === 0) throw new Error(`A coefficient of 0 isn't allowed ("${term}").`);
+      const sp = parseSpecies(body);
+      const prev = out.find(o => o.sp.key === sp.key);
+      if (prev) prev.coef += coef; else out.push({ coef, sp });
+    }
+    return out;
+  });
+  return { left: sides[0], right: sides[1] };
+}
+
+// ---------- Inventory ----------
+function inventory(eq) {
+  const L = {}, R = {}; let cL = 0, cR = 0;
+  for (const t of eq.left) { for (const e in t.sp.comp) L[e] = (L[e] || 0) + t.coef * t.sp.comp[e]; cL += t.coef * t.sp.charge; }
+  for (const t of eq.right) { for (const e in t.sp.comp) R[e] = (R[e] || 0) + t.coef * t.sp.comp[e]; cR += t.coef * t.sp.charge; }
+  const els = [...new Set([...Object.keys(L), ...Object.keys(R)])];
+  // order: not O/H first (alphabetical, C first), then O, then H
+  const ord = e => (e === 'O' ? 2 : e === 'H' ? 3 : e === 'C' ? 0 : 1);
+  els.sort((a, b) => ord(a) - ord(b) || a.localeCompare(b));
+  const rows = els.map(e => ({ el: e, L: L[e] || 0, R: R[e] || 0 }));
+  return { rows, cL, cR, atomsOK: rows.every(r => r.L === r.R), chargeOK: cL === cR };
+}
+
+// ---------- Oxidation numbers ----------
+function rankOf(el) {
+  if (el === 'F') return 0; if (ALKALI.has(el)) return 1; if (ALKEARTH.has(el)) return 2;
+  if (el === 'H') return 3; if (el === 'O') return 4; if (el === 'Cl') return 5; if (el === 'Br') return 6; if (el === 'I') return 7;
+  return -1;
+}
+function assignON(comp, charge) {
+  const els = Object.keys(comp);
+  const on = {};
+  if (els.length === 1) { on[els[0]] = Fr(charge, comp[els[0]]); return on; }
+  const ranked = els.filter(e => rankOf(e) >= 0).sort((a, b) => rankOf(a) - rankOf(b));
+  const others = els.filter(e => rankOf(e) < 0).sort((a, b) => enOf(b) - enOf(a));
+  const hydride = els.every(e => e === 'H' || !NONMETALS.has(e));
+  let solveEl;
+  if (!others.length) solveEl = ranked.pop();
+  for (const e of ranked) {
+    let v;
+    if (e === 'F') v = -1; else if (ALKALI.has(e)) v = 1; else if (ALKEARTH.has(e)) v = 2;
+    else if (e === 'H') v = hydride ? -1 : 1; else if (e === 'O') v = -2; else v = -1;
+    on[e] = Fr(v);
+  }
+  if (others.length) {
+    while (others.length > 1) { const e = others.shift(); on[e] = Fr(ANION[e] ?? 0); }
+    solveEl = others[0];
+  }
+  let sum = Fr(0);
+  for (const e in on) sum = fadd(sum, Fr(on[e].n * comp[e], on[e].d));
+  on[solveEl] = fdiv(fsub(Fr(charge), sum), Fr(comp[solveEl]));
+  return on;
+}
+function parseONInput(s) {
+  s = String(s).trim().replace(/[−–—]/g, '-').replace(/\s/g, '');
+  if (!s) return null;
+  let m = s.match(/^([+-]?)(\d+)\/(\d+)$/);
+  if (m) { const v = Fr(parseInt(m[2], 10) * (m[1] === '-' ? -1 : 1), parseInt(m[3], 10)); return v.d ? v : undefined; }
+  m = s.match(/^([+-]?)(\d+(?:\.\d+)?|\.\d+)$/);
+  if (m) return { approx: parseFloat(m[2]) * (m[1] === '-' ? -1 : 1) };
+  m = s.match(/^(\d+)([+-])$/); // "2+" style
+  if (m) return Fr(parseInt(m[1], 10) * (m[2] === '-' ? -1 : 1));
+  return undefined; // unreadable
+}
+function onMatches(input, frac) {
+  if (!input) return false;
+  if (input.approx !== undefined) return Math.abs(input.approx - frac.n / frac.d) < 0.011;
+  return feq(input, frac);
+}
+
+// ---------- Half-reaction split ----------
+function keyEls(sp) {
+  const k = Object.keys(sp.comp).filter(e => e !== 'H' && e !== 'O');
+  if (k.length) return k;
+  return sp.comp.O ? ['O'] : ['H'];
+}
+
+function analyzeSkeleton(skeletonStr) {
+  const eq = parseEquation(skeletonStr);
+  const R = eq.left.map(t => t.sp), P = eq.right.map(t => t.sp);
+  if (R.some(s => s.electron) || P.some(s => s.electron)) throw new Error('A skeleton equation should not contain electrons.');
+  const all = [...R, ...P];
+  for (const s of all) s.on = assignON(s.comp, s.charge);
+  const ox = { R: new Set(), P: new Set(), els: new Set() }, red = { R: new Set(), P: new Set(), els: new Set() };
+  for (const r of R) for (const p of P) {
+    const shared = keyEls(r).filter(e => keyEls(p).includes(e));
+    for (const e of shared) {
+      const a = r.on[e], b = p.on[e];
+      const diff = a.n * b.d - b.n * a.d; // >0 means r higher than p
+      if (diff < 0) { ox.R.add(r.key); ox.P.add(p.key); ox.els.add(e); }
+      else if (diff > 0) { red.R.add(r.key); red.P.add(p.key); red.els.add(e); }
+    }
+  }
+  if (!ox.R.size || !red.R.size) {
+    if (!ox.R.size && !red.R.size) throw new Error('No element changes oxidation number, so this is not a redox reaction.');
+    throw new Error(!ox.R.size ? 'Nothing is oxidized in this equation. Check the formulas.' : 'Nothing is reduced in this equation. Check the formulas.');
+  }
+  // attach species that didn't link (e.g. NH3 released from Ag(NH3)2+)
+  for (const [list, side] of [[R, 'R'], [P, 'P']]) for (const s of list) {
+    if (ox[side].has(s.key) || red[side].has(s.key)) continue;
+    const els = Object.keys(s.comp).filter(e => e !== 'H' && e !== 'O');
+    const shares = key => { const o = all.find(x => x.key === key); return o && els.some(e => o.comp[e]); };
+    const inOx = [...ox.R, ...ox.P].some(shares), inRed = [...red.R, ...red.P].some(shares);
+    if (inOx && !inRed) ox[side].add(s.key);
+    else if (inRed && !inOx) red[side].add(s.key);
+    else throw new Error(`Can't tell which half-reaction ${s.text} belongs to.`);
+  }
+  const byKey = {}; for (const s of all) byKey[s.key] = s;
+  const mk = h => ({ R: [...h.R].map(k => byKey[k]), P: [...h.P].map(k => byKey[k]), els: [...h.els] });
+  const prob = {
+    skeleton: skeletonStr, eq, R, P, byKey,
+    ox: mk(ox), red: mk(red),
+  };
+  prob.oxidizedEls = prob.ox.els; prob.reducedEls = prob.red.els;
+  prob.reducingAgents = prob.ox.R.map(s => s.key);
+  prob.oxidizingAgents = prob.red.R.map(s => s.key);
+  return prob;
+}
+
+// ---------- Linear algebra (nullspace over rationals) ----------
+function nullspace(A, ncols) {
+  const M = A.map(r => r.map(v => Fr(v)));
+  const rows = M.length; let lead = 0; const pivCols = [];
+  for (let r = 0; r < rows && lead < ncols; r++) {
+    let i = r;
+    while (lead < ncols) {
+      i = r; while (i < rows && M[i][lead].n === 0) i++;
+      if (i < rows) break;
+      lead++;
+    }
+    if (lead >= ncols) break;
+    [M[i], M[r]] = [M[r], M[i]];
+    const lv = M[r][lead];
+    M[r] = M[r].map(v => fdiv(v, lv));
+    for (let j = 0; j < rows; j++) if (j !== r && M[j][lead].n !== 0) {
+      const f = M[j][lead];
+      M[j] = M[j].map((v, c) => fsub(v, fmul(f, M[r][c])));
+    }
+    pivCols.push(lead); lead++;
+  }
+  const free = []; for (let c = 0; c < ncols; c++) if (!pivCols.includes(c)) free.push(c);
+  return free.map(fc => {
+    const v = Array(ncols).fill(null).map(() => Fr(0)); v[fc] = Fr(1);
+    pivCols.forEach((pc, r) => { v[pc] = fsub(Fr(0), M[r][fc]); });
+    return v;
+  });
+}
+function toIntegers(v) {
+  let L = 1; for (const x of v) L = lcm(L, x.d);
+  let ints = v.map(x => x.n * (L / x.d));
+  let g = 0; for (const x of ints) g = gcd(g, x);
+  return ints.map(x => x / (g || 1));
+}
+
+const SPECIAL = {
+  [KEY_H2O]: { text: 'H2O', comp: { H: 2, O: 1 }, charge: 0, key: KEY_H2O },
+  [KEY_HP]: { text: 'H^+', comp: { H: 1 }, charge: 1, key: KEY_HP },
+  [KEY_OH]: { text: 'OH^-', comp: { O: 1, H: 1 }, charge: -1, key: KEY_OH },
+  [KEY_E]: { text: 'e^-', electron: true, comp: {}, charge: -1, key: KEY_E },
+};
+
+// Solve one half reaction in acid. Returns {vec:{key:signedInt}, sp:{key:species}, order:[keys], electrons, type}
+function solveHalf(half, type) {
+  const cols = [];
+  for (const s of half.R) cols.push({ sp: s, side: 1, skel: true });
+  for (const s of half.P) if (!cols.find(c => c.sp.key === s.key)) cols.push({ sp: s, side: -1, skel: true });
+  for (const k of [KEY_H2O, KEY_HP, KEY_E]) if (!cols.find(c => c.sp.key === k)) cols.push({ sp: SPECIAL[k], side: 0, skel: false });
+  const solve = cs => {
+    const els = [...new Set(cs.flatMap(c => Object.keys(c.sp.comp)))];
+    const A = els.map(e => cs.map(c => c.sp.comp[e] || 0));
+    A.push(cs.map(c => c.sp.charge));
+    return nullspace(A, cs.length);
+  };
+  let ns = solve(cols);
+  // e.g. H2O2 -> O2: water would make the answer ambiguous, so try without the added H2O
+  if (ns.length > 1) {
+    const i = cols.findIndex(c => !c.skel && c.sp.key === KEY_H2O);
+    if (i >= 0) { const trial = cols.filter((_, j) => j !== i); const t = solve(trial); if (t.length === 1) { cols.splice(i, 1); ns = t; } }
+  }
+  if (ns.length !== 1) throw new Error(`The ${type === 'ox' ? 'oxidation' : 'reduction'} half-reaction can't be balanced uniquely (check the formulas).`);
+  let v = toIntegers(ns[0]);
+  const first = cols.findIndex(c => c.side !== 0);
+  if (v[first] * cols[first].side < 0) v = v.map(x => -x);
+  cols.forEach((c, i) => {
+    if (c.side !== 0 && (v[i] === 0 || Math.sign(v[i]) !== c.side))
+      throw new Error(`The ${type === 'ox' ? 'oxidation' : 'reduction'} half-reaction doesn't balance with ${c.sp.text} on that side. Check the formulas.`);
+  });
+  const vec = {}, sp = {};
+  cols.forEach((c, i) => { if (v[i] !== 0) { vec[c.sp.key] = v[i]; sp[c.sp.key] = c.sp; } });
+  const e = vec[KEY_E] || 0;
+  if (type === 'ox' && !(e < 0)) throw new Error('The oxidation half-reaction should lose electrons. Check the formulas.');
+  if (type === 'red' && !(e > 0)) throw new Error('The reduction half-reaction should gain electrons. Check the formulas.');
+  const skelKeys = new Set(cols.filter(c => c.skel).map(c => c.sp.key));
+  return { vec, sp, electrons: Math.abs(e), type, skelKeys, order: cols.map(c => c.sp.key).filter(k => vec[k]) };
+}
+
+function reduceVec(vec) {
+  let g = 0; for (const k in vec) g = gcd(g, vec[k]);
+  const out = {}; for (const k in vec) if (vec[k]) out[k] = vec[k] / (g || 1);
+  return out;
+}
+
+function combineHalves(oxH, redH) {
+  const L = lcm(oxH.electrons, redH.electrons);
+  const mo = L / oxH.electrons, mr = L / redH.electrons;
+  const vec = {}, sp = {}, order = [];
+  const add = (h, m) => { for (const k of h.order) { vec[k] = (vec[k] || 0) + h.vec[k] * m; sp[k] = h.sp[k]; if (!order.includes(k)) order.push(k); } };
+  add(oxH, mo); add(redH, mr);
+  delete vec[KEY_E];
+  for (const k in vec) if (!vec[k]) delete vec[k];
+  let g = 0; for (const k in vec) g = gcd(g, vec[k]);
+  return { vec: reduceVec(vec), sp, order: order.filter(k => vec[k]), mo, mr, eTransferred: L / (g || 1) };
+}
+
+function toBasic(acid) {
+  const vec = { ...acid.vec }, sp = { ...acid.sp, [KEY_OH]: SPECIAL[KEY_OH], [KEY_H2O]: SPECIAL[KEY_H2O] };
+  const h = vec[KEY_HP] || 0;
+  if (!h) return { vec, sp, order: acid.order.slice(), ohAdded: 0 };
+  delete vec[KEY_HP];
+  vec[KEY_H2O] = (vec[KEY_H2O] || 0) + h;
+  vec[KEY_OH] = (vec[KEY_OH] || 0) - h;
+  for (const k in vec) if (!vec[k]) delete vec[k];
+  const order = acid.order.filter(k => k !== KEY_HP && vec[k]);
+  if (vec[KEY_OH] && !order.includes(KEY_OH)) order.push(KEY_OH);
+  if (vec[KEY_H2O] && !order.includes(KEY_H2O)) order.push(KEY_H2O);
+  return { vec: reduceVec(vec), sp, order, ohAdded: Math.abs(h) };
+}
+
+// "Acid then add OH-" intermediate: both sides get h OH-, before combining into water
+function basicIntermediate(acid) {
+  const h = acid.vec[KEY_HP] || 0;
+  return { h: Math.abs(h), hSide: h > 0 ? 'left' : 'right' };
+}
+
+// ---------- Formatting ----------
+function vecToString(vec, sp, order, opts = {}) {
+  const keys = order.filter(k => vec[k]);
+  const fmt = k => { const c = Math.abs(vec[k]); return (c === 1 ? '' : c) + sp[k].text; };
+  const left = keys.filter(k => vec[k] > 0).map(fmt), right = keys.filter(k => vec[k] < 0).map(fmt);
+  return left.join(' + ') + ' -> ' + right.join(' + ');
+}
+// a half at a given stage (3: skeleton atoms, 4: +H2O, 5: +H+, 6: +e-)
+function halfStage(h, stage) {
+  const keep = k => h.skelKeys.has(k) || (stage >= 4 && k === KEY_H2O) || (stage >= 5 && k === KEY_HP) || (stage >= 6 && k === KEY_E);
+  const vec = {}; for (const k in h.vec) if (keep(k)) vec[k] = h.vec[k];
+  return vecToString(vec, h.sp, h.order);
+}
+
+// ---------- Full solution ----------
+function solveProblem(skeletonStr, medium) {
+  const prob = analyzeSkeleton(skeletonStr);
+  prob.medium = medium === 'basic' ? 'basic' : 'acidic';
+  prob.oxHalf = solveHalf(prob.ox, 'ox');
+  prob.redHalf = solveHalf(prob.red, 'red');
+  prob.acid = combineHalves(prob.oxHalf, prob.redHalf);
+  prob.basic = toBasic(prob.acid);
+  // list species in skeleton order, then H+/OH-/H2O
+  const skelOrder = [...prob.R, ...prob.P].map(x => x.key);
+  const rank = k => { const i = skelOrder.indexOf(k); return i >= 0 ? i : 100 + [KEY_HP, KEY_OH, KEY_H2O].indexOf(k); };
+  for (const f of [prob.acid, prob.basic]) f.order = Object.keys(f.vec).sort((a, b) => rank(a) - rank(b));
+  prob.final = prob.medium === 'basic' ? prob.basic : prob.acid;
+  prob.answerText = vecToString(prob.final.vec, prob.final.sp, prob.final.order);
+  prob.acidText = vecToString(prob.acid.vec, prob.acid.sp, prob.acid.order);
+  prob.needsWaterOrH = !!(prob.acid.vec[KEY_H2O] || prob.acid.vec[KEY_HP]);
+  // halves with no O or H at all skip the H2O / H+ steps
+  const hasOH = h => [...h.R, ...h.P].some(x => x.comp.O || x.comp.H);
+  prob.oxHalf.noOH = !hasOH(prob.ox); prob.redHalf.noOH = !hasOH(prob.red);
+  // no O in a half -> no H2O needed (step 4 skipped); no O and no H -> no H+ either (step 5 skipped)
+  const hasO = h => [...h.R, ...h.P].some(x => x.comp.O);
+  prob.oxHalf.noO = !hasO(prob.ox); prob.redHalf.noO = !hasO(prob.red);
+  prob.noOH = prob.oxHalf.noOH && prob.redHalf.noOH;
+  return prob;
+}
+
+// ---------- Checking student work ----------
+function eqVec(eq) {
+  const vec = {}, sp = {};
+  for (const t of eq.left) { vec[t.sp.key] = (vec[t.sp.key] || 0) + t.coef; sp[t.sp.key] = t.sp; }
+  for (const t of eq.right) { vec[t.sp.key] = (vec[t.sp.key] || 0) - t.coef; sp[t.sp.key] = t.sp; }
+  return { vec, sp };
+}
+function bothSides(eq) {
+  const l = new Set(eq.left.map(t => t.sp.key));
+  return eq.right.filter(t => l.has(t.sp.key)).map(t => t.sp);
+}
+function balanceMsgs(inv, which) {
+  const msgs = [];
+  for (const r of inv.rows) {
+    if (r.L === r.R) continue;
+    if (which === 'nonOH' && (r.el === 'O' || r.el === 'H')) continue;
+    if (which === 'O' && r.el === 'H') continue;
+    msgs.push({ kind: r.el === 'O' ? 'O' : r.el === 'H' ? 'H' : 'atoms', text: `${r.el}: ${r.L} on the left, ${r.R} on the right.` });
+  }
+  return msgs;
+}
+function suggest(sp) { return sp.ambiguous ? ` Did you mean ${sp.ambiguous}? Charges go after ^.` : ''; }
+const NICE = { [KEY_H2O]: 'H₂O', [KEY_HP]: 'H⁺', [KEY_OH]: 'OH⁻', [KEY_E]: 'electrons' };
+
+function checkHalf(input, h, stage) {
+  let eq;
+  try { eq = parseEquation(input); } catch (e) { return { ok: false, msgs: [{ kind: 'parse', text: e.message }] }; }
+  const msgs = [];
+  const sideOf = k => (h.vec[k] > 0 ? 'left' : 'right');
+  const allowed = new Set([...h.skelKeys]);
+  if (stage >= 4 && !h.noO) allowed.add(KEY_H2O);
+  if (stage >= 5 && !h.noOH) allowed.add(KEY_HP);
+  if (stage >= 6) allowed.add(KEY_E);
+  const present = new Map();
+  for (const [side, terms] of [['left', eq.left], ['right', eq.right]]) for (const t of terms) {
+    const k = t.sp.key;
+    if (!allowed.has(k)) {
+      if (h.noO && !h.noOH && k === KEY_H2O) msgs.push({ kind: 'noO', text: 'Leave out H₂O: this half-reaction has no O, so no water is needed. Balance H with H⁺ only.' });
+      else if (h.noOH && [KEY_H2O, KEY_HP, KEY_OH].includes(k)) msgs.push({ kind: 'noOH', text: `Leave out ${NICE[k]}: this half-reaction has no O or H, so it needs only electrons.` });
+      else if (k === KEY_OH) msgs.push({ kind: 'species', text: 'Balance each half as if in acid, with H₂O and H⁺. OH⁻ is added only at the end, for basic solutions.' });
+      else if (k === KEY_H2O) msgs.push({ kind: 'species', text: 'Not yet: this step balances only the atoms other than O and H. H₂O comes in the next step.' });
+      else if (k === KEY_HP) msgs.push({ kind: 'species', text: `Not yet: ${stage === 3 ? 'H⁺ comes two steps later.' : 'balance O with H₂O only in this step. H⁺ comes next.'}` });
+      else if (k === KEY_E) msgs.push({ kind: 'species', text: 'Not yet: electrons are added in the last step of the half-reaction, to balance charge.' });
+      else msgs.push({ kind: 'species', text: `${t.sp.text} isn't part of this half-reaction.${suggest(t.sp)}` });
+      continue;
+    }
+    if (present.has(k) && present.get(k) !== side) continue; // reported below
+    present.set(k, side);
+  }
+  for (const s of bothSides(eq)) if (!(h.noOH && [KEY_H2O, KEY_HP, KEY_OH].includes(s.key)) && !(h.noO && s.key === KEY_H2O)) msgs.push({ kind: 'cancel', text: `${s.electron ? 'Electrons appear' : s.text + ' appears'} on both sides. Cancel so it appears on one side only.` });
+  const hadSpecies = msgs.some(m => m.kind === 'species');
+  for (const k of (hadSpecies ? [] : h.skelKeys)) {
+    const s = h.sp[k];
+    if (!present.has(k)) msgs.push({ kind: 'missing', text: `${s.text} is missing. Every species in the half-reaction stays in.` });
+    else if (present.get(k) !== sideOf(k) && !(eq.left.some(t => t.sp.key === k) && eq.right.some(t => t.sp.key === k)))
+      msgs.push({ kind: 'side', text: `${s.text} belongs on the ${sideOf(k)} side.` });
+  }
+  if (stage >= 6 && present.has(KEY_E)) {
+    const want = h.type === 'ox' ? 'right' : 'left';
+    if (present.get(KEY_E) !== want) msgs.push({ kind: 'eside', text: h.type === 'ox' ? 'Oxidation is loss of electrons, so electrons go on the product (right) side.' : 'Reduction is gain of electrons, so electrons go on the reactant (left) side.' });
+  }
+  if (msgs.length) return { ok: false, msgs, eq };
+  const inv = inventory(eq);
+  const which = stage === 3 ? 'nonOH' : stage === 4 ? 'O' : 'all';
+  const bm = balanceMsgs(inv, which);
+  msgs.push(...bm);
+  if (stage >= 6 && !inv.chargeOK) msgs.push({ kind: 'charge', text: `Charge: ${fmtCharge(inv.cL)} on the left, ${fmtCharge(inv.cR)} on the right.` });
+  if (stage === 6 && !present.has(KEY_E) && !msgs.length) msgs.push({ kind: 'charge', text: 'Add electrons to balance charge.' });
+  if (msgs.length) return { ok: false, msgs, eq, inv };
+  // ok; work out electrons and lowest-terms note
+  const ev = eqVec(eq);
+  if (stage === 6) {
+    let ratio = null, prop = true;
+    for (const k of new Set([...Object.keys(ev.vec), ...Object.keys(h.vec)])) {
+      const a = h.vec[k] || 0, b = ev.vec[k] || 0;
+      if (!a || !b) { prop = false; break; }
+      if (ratio === null) ratio = b / a; else if (Math.abs(b / a - ratio) > 1e-9) { prop = false; break; }
+    }
+    if (!prop) return { ok: false, msgs: [{ kind: 'extraWater', text: 'This balances, but it uses more H₂O and H⁺ than needed. Start again from the skeleton species and add only the H₂O needed to balance O.' }], eq, inv };
+  }
+  let g = 0; for (const k in ev.vec) g = gcd(g, ev.vec[k]);
+  const note = g > 1 ? `Correct. You could divide every coefficient by ${g}, but it isn't required.` : '';
+  const eCount = Math.abs(ev.vec[KEY_E] || 0);
+  return { ok: true, msgs: [], eq, inv, note, electrons: eCount, vec: ev.vec, sp: ev.sp };
+}
+function fmtCharge(c) { return c === 0 ? '0' : (c > 0 ? '+' : '−') + Math.abs(c); }
+
+// overall equation check. form: 'acidic' | 'basic'
+function checkOverall(input, prob, form) {
+  let eq;
+  try { eq = parseEquation(input); } catch (e) { return { ok: false, msgs: [{ kind: 'parse', text: e.message }] }; }
+  const ans = form === 'basic' ? prob.basic : prob.acid;
+  const msgs = [];
+  const allowed = new Set([...prob.R, ...prob.P].map(s => s.key));
+  if (!prob.noOH) { allowed.add(KEY_H2O); allowed.add(form === 'basic' ? KEY_OH : KEY_HP); }
+  for (const t of [...eq.left, ...eq.right]) {
+    const k = t.sp.key;
+    if (allowed.has(k)) continue;
+    if (prob.noOH && [KEY_H2O, KEY_HP, KEY_OH].includes(k)) { msgs.push({ kind: 'noOH', text: `Leave out ${NICE[k]}: nothing in this reaction contains O or H, so no H₂O, H⁺ or OH⁻ is needed.` }); continue; }
+    if (k === KEY_E) msgs.push({ kind: 'electrons', text: 'Electrons should not appear in the overall equation. Multiply the half-reactions so the electrons cancel.' });
+    else if (k === KEY_HP) msgs.push({ kind: 'basic', text: 'In basic solution the final equation has no H⁺. Add as many OH⁻ to both sides as there are H⁺, combine H⁺ + OH⁻ into H₂O, and cancel water.' });
+    else if (k === KEY_OH) msgs.push({ kind: 'acidspecies', text: 'This reaction is in acidic solution, so use H⁺ and H₂O, not OH⁻.' });
+    else msgs.push({ kind: 'species', text: `${t.sp.text} isn't in this reaction.${suggest(t.sp)}` });
+  }
+  for (const s of bothSides(eq)) if (!(prob.noOH && [KEY_H2O, KEY_HP, KEY_OH].includes(s.key))) msgs.push({ kind: 'cancel', text: `${s.text} appears on both sides. Cancel so it appears on one side only.` });
+  const ev = eqVec(eq);
+  const hadSpecies = msgs.some(m => m.kind === 'species');
+  for (const s of (hadSpecies ? [] : [...prob.R, ...prob.P])) {
+    const want = ans.vec[s.key];
+    if (!want) continue;
+    if (!ev.vec[s.key]) msgs.push({ kind: 'missing', text: `${s.text} is missing.` });
+    else if (Math.sign(ev.vec[s.key]) !== Math.sign(want)) msgs.push({ kind: 'side', text: `${s.text} belongs on the ${want > 0 ? 'left' : 'right'} side.` });
+  }
+  if (msgs.length) return { ok: false, msgs, eq };
+  const inv = inventory(eq);
+  msgs.push(...balanceMsgs(inv, 'all'));
+  if (!inv.chargeOK) msgs.push({ kind: 'charge', text: `Charge: ${fmtCharge(inv.cL)} on the left, ${fmtCharge(inv.cR)} on the right.` });
+  if (msgs.length) return { ok: false, msgs, eq, inv };
+  // balanced. proportional to answer?
+  const keys = new Set([...Object.keys(ev.vec), ...Object.keys(ans.vec)]);
+  let ratio = null, prop = true;
+  for (const k of keys) {
+    const a = ans.vec[k] || 0, b = ev.vec[k] || 0;
+    if (!a || !b) { prop = false; break; }
+    const r = b / a;
+    if (ratio === null) ratio = r; else if (Math.abs(r - ratio) > 1e-9) { prop = false; break; }
+  }
+  if (!prop || ratio <= 0) return { ok: false, msgs: [{ kind: 'electrons', text: 'Atoms and charge balance, but electrons lost don\'t equal electrons gained, so this isn\'t the right ratio. Check the multipliers on your half-reactions.' }], eq, inv };
+  const note = ratio > 1 + 1e-9 ? `Correct, but not in lowest terms: you can divide every coefficient by ${Math.round(ratio)}.` : '';
+  return { ok: true, msgs: [], eq, inv, note };
+}
+
+const RULES = {
+  parse: 'Write species like MnO4^- or Fe^3+ (charge after ^), with " + " between species and -> between the sides.',
+  species: 'Use only the species in the skeleton equation, plus H₂O and H⁺ (acidic) or H₂O and OH⁻ (basic).',
+  missing: 'Every species in the skeleton equation must appear in the balanced equation.',
+  side: 'Reactants stay on the left and products on the right. Only H₂O, H⁺, OH⁻ and electrons can be added to either side.',
+  cancel: 'After adding the half-reactions, cancel anything that appears on both sides (H₂O, H⁺, OH⁻, electrons).',
+  atoms: 'Balance the atoms other than O and H first, by changing coefficients of the skeleton species.',
+  O: 'Balance O by adding H₂O to the side that needs oxygen.',
+  H: 'Balance H by adding H⁺ to the side that needs hydrogen.',
+  charge: 'Balance charge in each half-reaction with electrons. Then multiply the halves so electrons lost = electrons gained before adding them.',
+  electrons: 'Multiply each half-reaction so the electrons lost in oxidation equal the electrons gained in reduction, then add and cancel.',
+  basic: 'For basic solution: finish in acid, add one OH⁻ to both sides for every H⁺, combine H⁺ + OH⁻ → H₂O, then cancel water.',
+  acidspecies: 'In acidic solution, use H⁺ and H₂O to balance O and H.',
+  noO: 'Add H₂O only to balance O. A half-reaction with no O needs no water.',
+  noOH: 'Add H₂O and H⁺ only when the species contain O or H. Here, balance the atoms, then the charge with electrons.',
+  extraWater: 'Use the fewest H₂O and H⁺ that balance the half-reaction. The O atoms come from the skeleton species first.',
+  eside: 'Oxidation is loss of electrons (electrons are products). Reduction is gain of electrons (electrons are reactants).',
+};
+
+if (typeof module !== 'undefined') module.exports = {
+  Fr, fstr, feq, parseSpecies, parseEquation, parseFormula, splitTerms, inventory, assignON, parseONInput, onMatches,
+  analyzeSkeleton, solveHalf, combineHalves, toBasic, solveProblem, halfStage, vecToString, checkHalf, checkOverall,
+  basicIntermediate, KEY_E, KEY_H2O, KEY_HP, KEY_OH, RULES, normalize,
+};
+
+</script>
+<script>
+/* Built-in problem bank. level: 1 metals & ions, 2 acidic, 3 basic, 4 disproportionation & multi-element, 5 organic */
+const BUILTIN_PROBLEMS = [
+  // ---- Level 1: metals and simple ions (only charge needs care) ----
+  { id: 'L1-01', level: 1, medium: 'acidic', eq: 'Cu + Ag^+ -> Cu^2+ + Ag' },
+  { id: 'L1-02', level: 1, medium: 'acidic', eq: 'Al + Cu^2+ -> Al^3+ + Cu' },
+  { id: 'L1-03', level: 1, medium: 'acidic', eq: 'Zn + Fe^3+ -> Zn^2+ + Fe^2+' },
+  { id: 'L1-04', level: 1, medium: 'acidic', eq: 'Fe^3+ + Sn^2+ -> Fe^2+ + Sn^4+' },
+  { id: 'L1-05', level: 1, medium: 'acidic', eq: 'Cr + Ni^2+ -> Cr^3+ + Ni' },
+  { id: 'L1-06', level: 1, medium: 'acidic', eq: 'Al + H^+ -> Al^3+ + H2' },
+  { id: 'L1-07', level: 1, medium: 'acidic', eq: 'Cl2 + Br^- -> Cl^- + Br2' },
+  { id: 'L1-08', level: 1, medium: 'acidic', eq: 'Ce^4+ + Sn^2+ -> Ce^3+ + Sn^4+' },
+  { id: 'L1-09', level: 1, medium: 'acidic', eq: 'Mg + Al^3+ -> Mg^2+ + Al' },
+  // ---- Level 2: acidic solution ----
+  { id: 'L2-01', level: 2, medium: 'acidic', eq: 'MnO4^- + Fe^2+ -> Mn^2+ + Fe^3+' },
+  { id: 'L2-02', level: 2, medium: 'acidic', eq: 'Cr2O7^2- + Fe^2+ -> Cr^3+ + Fe^3+' },
+  { id: 'L2-03', level: 2, medium: 'acidic', eq: 'Cr2O7^2- + I^- -> Cr^3+ + I2' },
+  { id: 'L2-04', level: 2, medium: 'acidic', eq: 'MnO4^- + C2O4^2- -> Mn^2+ + CO2' },
+  { id: 'L2-05', level: 2, medium: 'acidic', eq: 'Cu + NO3^- -> Cu^2+ + NO' },
+  { id: 'L2-06', level: 2, medium: 'acidic', eq: 'Cu + NO3^- -> Cu^2+ + NO2' },
+  { id: 'L2-07', level: 2, medium: 'acidic', eq: 'Zn + NO3^- -> Zn^2+ + NH4^+' },
+  { id: 'L2-08', level: 2, medium: 'acidic', eq: 'MnO4^- + SO3^2- -> Mn^2+ + SO4^2-' },
+  { id: 'L2-09', level: 2, medium: 'acidic', eq: 'Ag + NO3^- -> Ag^+ + NO' },
+  { id: 'L2-10', level: 2, medium: 'acidic', eq: 'H2O2 + Fe^2+ -> H2O + Fe^3+' },
+  { id: 'L2-11', level: 2, medium: 'acidic', eq: 'MnO4^- + H2O2 -> Mn^2+ + O2' },
+  { id: 'L2-12', level: 2, medium: 'acidic', eq: 'PbO2 + Mn^2+ -> Pb^2+ + MnO4^-' },
+  { id: 'L2-13', level: 2, medium: 'acidic', eq: 'Sn^2+ + IO3^- -> Sn^4+ + I^-' },
+  { id: 'L2-14', level: 2, medium: 'acidic', eq: 'MnO4^- + Cl^- -> Mn^2+ + Cl2' },
+  { id: 'L2-15', level: 2, medium: 'acidic', eq: 'H2S + NO3^- -> S + NO' },
+  // ---- Level 3: basic solution ----
+  { id: 'L3-01', level: 3, medium: 'basic', eq: 'MnO4^- + I^- -> MnO2 + I2' },
+  { id: 'L3-02', level: 3, medium: 'basic', eq: 'MnO4^- + SO3^2- -> MnO2 + SO4^2-' },
+  { id: 'L3-03', level: 3, medium: 'basic', eq: 'Cr(OH)3 + ClO3^- -> CrO4^2- + Cl^-' },
+  { id: 'L3-04', level: 3, medium: 'basic', eq: 'Al + NO3^- -> Al(OH)4^- + NH3' },
+  { id: 'L3-05', level: 3, medium: 'basic', eq: 'CN^- + MnO4^- -> CNO^- + MnO2' },
+  { id: 'L3-06', level: 3, medium: 'basic', eq: 'ClO^- + Cr(OH)4^- -> Cl^- + CrO4^2-' },
+  { id: 'L3-07', level: 3, medium: 'basic', eq: 'H2O2 + ClO2 -> ClO2^- + O2' },
+  { id: 'L3-08', level: 3, medium: 'basic', eq: 'Zn + NO3^- -> Zn(OH)4^2- + NH3' },
+  { id: 'L3-09', level: 3, medium: 'basic', eq: 'MnO4^- + C2O4^2- -> MnO2 + CO3^2-' },
+  { id: 'L3-10', level: 3, medium: 'basic', eq: 'Fe(OH)2 + CrO4^2- -> Fe(OH)3 + Cr(OH)4^-' },
+  { id: 'L3-11', level: 3, medium: 'basic', eq: 'Bi(OH)3 + SnO2^2- -> Bi + SnO3^2-' },
+  // ---- Level 4: disproportionation, comproportionation, more than one element changing ----
+  { id: 'L4-01', level: 4, medium: 'basic', eq: 'Cl2 -> Cl^- + ClO3^-' },
+  { id: 'L4-02', level: 4, medium: 'basic', eq: 'Cl2 -> Cl^- + ClO^-' },
+  { id: 'L4-03', level: 4, medium: 'acidic', eq: 'H2O2 -> H2O + O2' },
+  { id: 'L4-04', level: 4, medium: 'acidic', eq: 'IO3^- + I^- -> I2' },
+  { id: 'L4-05', level: 4, medium: 'acidic', eq: 'BrO3^- + Br^- -> Br2' },
+  { id: 'L4-06', level: 4, medium: 'acidic', eq: 'NO2 -> NO3^- + NO' },
+  { id: 'L4-07', level: 4, medium: 'basic', eq: 'P4 -> PH3 + H2PO2^-' },
+  { id: 'L4-08', level: 4, medium: 'acidic', eq: 'As2S3 + NO3^- -> H3AsO4 + SO4^2- + NO' },
+  { id: 'L4-09', level: 4, medium: 'acidic', eq: 'Cu2S + NO3^- -> Cu^2+ + SO4^2- + NO' },
+  { id: 'L4-10', level: 4, medium: 'acidic', eq: 'S2O3^2- + I2 -> S4O6^2- + I^-' },
+  { id: 'L4-11', level: 4, medium: 'basic', eq: 'Br2 -> Br^- + BrO3^-' },
+  // ---- Level 5: organic redox ----
+  { id: 'L5-01', level: 5, medium: 'acidic', eq: 'C2H5OH + Cr2O7^2- -> CH3COOH + Cr^3+' },
+  { id: 'L5-02', level: 5, medium: 'acidic', eq: 'CH3CH2OH + Cr2O7^2- -> CH3CHO + Cr^3+' },
+  { id: 'L5-03', level: 5, medium: 'acidic', eq: 'CH3CH(OH)CH3 + Cr2O7^2- -> CH3COCH3 + Cr^3+' },
+  { id: 'L5-04', level: 5, medium: 'acidic', eq: 'CH3OH + MnO4^- -> HCOOH + Mn^2+' },
+  { id: 'L5-05', level: 5, medium: 'acidic', eq: 'H2C2O4 + MnO4^- -> CO2 + Mn^2+' },
+  { id: 'L5-06', level: 5, medium: 'basic', eq: 'C6H5CH3 + MnO4^- -> C6H5COO^- + MnO2' },
+  { id: 'L5-07', level: 5, medium: 'basic', eq: 'C2H4 + MnO4^- -> HOCH2CH2OH + MnO2' },
+  { id: 'L5-08', level: 5, medium: 'basic', eq: 'CH3CHO + Ag(NH3)2^+ -> CH3COO^- + Ag + NH3' },
+  { id: 'L5-09', level: 5, medium: 'acidic', eq: 'CH3OH + Cr2O7^2- -> CO2 + Cr^3+' },
+  { id: 'L5-10', level: 5, medium: 'acidic', eq: 'C6H12O6 + MnO4^- -> CO2 + Mn^2+' },
+];
+if (typeof module !== 'undefined') module.exports = { BUILTIN_PROBLEMS };
+
+</script>
+<script>
+/* ===================== User interface ===================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const LEVELS = { 1: 'Metals & ions', 2: 'Acidic', 3: 'Basic', 4: 'Disproportionation & more', 5: 'Organic' };
+const LS_KEY = 'redoxLab.uploadedProblems';
+
+// ---------- Rendering chemistry ----------
+function spHTML(t) {
+  t = normalize(t).trim();
+  if (/^e\^?(-1|1-|-)$/.test(t)) return 'e<sup>−</sup>';
+  let state = '';
+  const sm = t.match(/\s*(\((aq|s|l|g)\))\s*$/i);
+  if (sm) { state = sm[1]; t = t.slice(0, sm.index); }
+  let f = t, ch = '';
+  const k = t.lastIndexOf('^');
+  if (k >= 0) { f = t.slice(0, k); ch = t.slice(k + 1).trim(); }
+  else { const m = t.match(/^(.*?)([+-])$/); if (m) { f = m[1]; ch = m[2]; } }
+  ch = ch.replace(/^([+-])(\d+)$/, '$2$1').replace('-', '−');
+  const body = esc(f).replace(/([A-Za-z)\]])(\d+)/g, '$1<sub>$2</sub>');
+  return body + (ch ? '<sup>' + ch + '</sup>' : '') + (state ? '<span class="state">' + state + '</span>' : '');
+}
+function eqHTML(str) {
+  try {
+    const s = normalize(str).trim();
+    const parts = s.split(/\s*(?:<?-+>|→|⟶|⇒|=>|=)\s*/);
+    const side = p => splitTerms(p).filter(x => x).map(term => {
+      const m = term.match(/^(\d+)\s*(.+)$/);
+      return m ? `<span class="coef">${m[1]}</span>${spHTML(m[2])}` : spHTML(term);
+    }).join('<span class="plus">+</span>');
+    if (parts.length === 1) return side(parts[0]);
+    return side(parts[0]) + '<span class="arrow">→</span>' + side(parts.slice(1).join(' '));
+  } catch (e) { return esc(str); }
+}
+const eqSpan = (str, cls = 'eq') => `<span class="${cls}">${eqHTML(str)}</span>`;
+const onFmt = f => fstr(f);
+const medBadge = p => p.noOH ? '<span class="badge lvl">aqueous solution · no H₂O or H⁺ needed</span>' : `<span class="badge ${p.medium}">${p.medium} solution</span>`;
+
+// focus: 3 = only atoms other than O/H matter, 4 = +O, 5 = all atoms, 6 = atoms + charge
+function invHTML(eq, focus = 6) {
+  const inv = inventory(eq);
+  let h = '<table class="inv"><tr><th></th><th>Left</th><th>Right</th><th></th></tr>';
+  for (const r of inv.rows) {
+    const later = (focus === 3 && (r.el === 'O' || r.el === 'H')) || (focus === 4 && r.el === 'H');
+    const ok = r.L === r.R;
+    h += `<tr class="${later ? 'later' : ''}"><td>${r.el}</td><td>${r.L}</td><td>${r.R}</td><td class="${later ? '' : ok ? 'good' : 'badc'}">${later ? 'later' : ok ? '✓' : '✗'}</td></tr>`;
+  }
+  const cl = focus < 6;
+  const cs = c => (c > 0 ? '+' + c : c < 0 ? '−' + Math.abs(c) : '0');
+  h += `<tr class="${cl ? 'later' : ''}"><td>charge</td><td>${cs(inv.cL)}</td><td>${cs(inv.cR)}</td><td class="${cl ? '' : inv.chargeOK ? 'good' : 'badc'}">${cl ? 'later' : inv.chargeOK ? '✓' : '✗'}</td></tr>`;
+  return h + '</table>';
+}
+
+// equation input with live preview + inventory
+function eqBox(id, value, opts = {}) {
+  const dis = opts.disabled ? 'disabled' : '';
+  return `<input type="text" class="eqin" id="${id}" data-focus="${opts.focus || 6}" data-inv="${opts.inv === false ? 0 : 1}" value="${esc(value || '')}" ${dis} spellcheck="false" autocomplete="off" placeholder="${esc(opts.placeholder || 'e.g. MnO4^- + 8H^+ + 5e^- -> Mn^2+ + 4H2O')}">
+    <div class="preview" id="${id}-pv"></div><div id="${id}-iv"></div>`;
+}
+function updateEqBox(inp) {
+  const pv = $(inp.id + '-pv'), iv = $(inp.id + '-iv');
+  const v = inp.value;
+  if (!v.trim()) { pv.innerHTML = ''; iv.innerHTML = ''; return; }
+  let eq = null, err = '';
+  try { eq = parseEquation(v); } catch (e) { err = e.message; }
+  pv.innerHTML = `<span class="lbl">Reads as:</span><span class="eq">${eqHTML(v)}</span>` + (err && /->|→|=/.test(v) ? ` <span class="small" style="color:var(--bad)">${esc(err)}</span>` : '');
+  if (inp.dataset.inv === '1' && eq && showInventory) iv.innerHTML = invHTML(eq, +inp.dataset.focus);
+  else iv.innerHTML = '';
+}
+let showInventory = true;
+function bindEqBoxes(root, store) {
+  root.querySelectorAll('input.eqin').forEach(inp => {
+    updateEqBox(inp);
+    inp.addEventListener('input', () => { if (store) store[inp.id] = inp.value; updateEqBox(inp); });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { const b = $(inp.id + '-check'); if (b && !b.disabled) b.click(); } });
+  });
+}
+
+function fbHTML(kind, msgs, rule, extra = '') {
+  if (!msgs || !msgs.length) return '';
+  msgs = [...new Set(msgs)];
+  const list = msgs.length === 1 ? esc(msgs[0]) : '<ul>' + msgs.map(m => `<li>${esc(m)}</li>`).join('') + '</ul>';
+  return `<div class="fb ${kind}">${list}${rule ? `<div class="rule"><b>Rule:</b> ${esc(rule)}</div>` : ''}${extra}</div>`;
+}
+// Feedback ladder: try 1 -> what's wrong; try 2 -> + rule; try 3+ -> + "show me"
+function ladderFB(res, tries, showId) {
+  const msgs = res.msgs.map(m => m.text);
+  const rule = tries >= 2 ? RULES[res.msgs[0].kind] || '' : '';
+  const extra = tries >= 3 && showId ? `<div class="row"><button class="btn secondary small" id="${showId}">Show me</button></div>` : '';
+  return fbHTML('bad', msgs, rule, extra);
+}
+
+// ---------- Problem bank ----------
+let PROBLEMS = BUILTIN_PROBLEMS.slice();
+let bankSource = 'built-in';
+function uploadedProblems() { try { const j = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); return Array.isArray(j) ? j : []; } catch (e) { return []; } }
+function rebuildBank(base) {
+  const map = new Map(base.map(p => [p.id, p]));
+  for (const p of uploadedProblems()) map.set(p.id, p);
+  PROBLEMS = [...map.values()].sort((a, b) => a.level - b.level || String(a.id).localeCompare(String(b.id)));
+}
+async function loadBank() {
+  let base = BUILTIN_PROBLEMS;
+  try {
+    const r = await fetch('problems.json', { cache: 'no-store' });
+    if (r.ok) { const j = await r.json(); if (Array.isArray(j) && j.length) { base = j; bankSource = 'problems.json'; } }
+  } catch (e) { /* stay with built-in */ }
+  rebuildBank(base);
+}
+const levelCount = lv => PROBLEMS.filter(p => lv === 'all' || p.level == lv).length;
+function levelChips(cur, attr) {
+  return `<div class="chips">` + ['all', 1, 2, 3, 4, 5].map(lv =>
+    `<button ${attr}="${lv}" class="${String(cur) === String(lv) ? 'active' : ''}">${lv === 'all' ? 'All' : 'Level ' + lv + ': ' + LEVELS[lv]}<span class="count">${levelCount(lv)}</span></button>`).join('') + '</div>';
+}
+
+// ======================================================
+//                      COACHING
+// ======================================================
+const C = { level: 'all', pid: null, prob: null, vals: {}, err: '' };
+
+function resetCoach(prob) {
+  Object.assign(C, {
+    prob, vals: {}, err: '',
+    on: { tries: 0, done: false, marks: {} }, id: { tries: 0, done: false },
+    split: { tries: 0, done: false, fb: {} },
+    half: { ox: { stage: 3, acc: {}, tries: {}, fb: '' }, red: { stage: 3, acc: {}, tries: {}, fb: '' } },
+    mult: { tries: 0, done: false }, sum: { tries: 0, done: false }, basic: { tries: 0, done: false },
+  });
+}
+
+function renderCoachPick() {
+  const list = PROBLEMS.filter(p => C.level === 'all' || p.level == C.level);
+  $('coach-pick').innerHTML = `
+    <h2>Choose a reaction</h2>
+    ${levelChips(C.level, 'data-clevel')}
+    <div class="row">
+      <select id="c-select" style="min-width:420px">
+        <option value="">— pick a problem (${list.length}) —</option>
+        ${list.map(p => `<option value="${esc(p.id)}" ${p.id === C.pid ? 'selected' : ''}>${esc(p.id)} · ${esc(p.eq.replace(/->/, '→'))} (${p.medium})</option>`).join('')}
+      </select>
+      <button class="btn secondary" id="c-random">Pick one for me</button>
+    </div>
+    <details style="margin-top:10px" ${C.pid === 'custom' ? 'open' : ''}><summary>…or type your own skeleton equation</summary>
+      <div class="row"><div style="flex:1;min-width:380px">${eqBox('c-custom', C.customText || '', { inv: false, placeholder: 'e.g. Cr2O7^2- + Fe^2+ -> Cr^3+ + Fe^3+' })}</div></div>
+      <div class="row"><label>Solution: <select id="c-custom-med"><option value="acidic">acidic</option><option value="basic" ${C.customMed === 'basic' ? 'selected' : ''}>basic</option></select></label>
+      <button class="btn" id="c-custom-go">Coach me on this one</button></div>
+      <div id="c-custom-fb"></div>
+    </details>
+    <div class="small muted" style="margin-top:8px">Typing tips: put charges after <code>^</code> (<code>Fe^3+</code>, <code>MnO4^-</code>, <code>Cr2O7^2-</code>), electrons as <code>e^-</code>,
+      and " + " between species. Use <code>-&gt;</code> for the arrow. The line under each box shows how your typing was read.</div>`;
+  const root = $('coach-pick');
+  root.querySelectorAll('[data-clevel]').forEach(b => b.onclick = () => { C.level = b.dataset.clevel; renderCoachPick(); });
+  $('c-select').onchange = e => { if (e.target.value) startCoach(PROBLEMS.find(p => p.id === e.target.value)); };
+  $('c-random').onclick = () => {
+    const pool = list.filter(p => p.id !== C.pid);
+    if (pool.length) startCoach(pool[Math.floor(Math.random() * pool.length)]);
+  };
+  bindEqBoxes(root);
+  $('c-custom').addEventListener('input', e => { C.customText = e.target.value; });
+  $('c-custom-go').onclick = () => {
+    const txt = $('c-custom').value, med = $('c-custom-med').value;
+    C.customText = txt; C.customMed = med;
+    try { solveProblem(txt, med); } catch (e) { $('c-custom-fb').innerHTML = fbHTML('bad', [e.message]); return; }
+    startCoach({ id: 'custom', level: 0, medium: med, eq: txt });
+  };
+}
+
+function startCoach(p) {
+  let prob;
+  try { prob = solveProblem(p.eq, p.medium); } catch (e) { $('coach-steps').innerHTML = fbHTML('bad', ['This problem could not be set up: ' + e.message]); return; }
+  prob.meta = p;
+  C.pid = p.id;
+  resetCoach(prob);
+  renderCoachPick();
+  renderCoach();
+  $('coach-steps').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function stepCard(n, title, state, body) {
+  return `<div class="card step ${state}" id="step-${n}"><h2><span class="num">${state === 'done' ? '✓' : n}</span>${title}</h2><div class="body">${body}</div></div>`;
+}
+
+function uniqueSpecies(prob) {
+  const seen = new Set(), out = [];
+  for (const s of [...prob.R, ...prob.P]) if (!seen.has(s.key)) { seen.add(s.key); out.push(s); }
+  return out;
+}
+
+function renderCoach() {
+  const p = C.prob;
+  if (!p) { $('coach-steps').innerHTML = ''; return; }
+  const basic = p.medium === 'basic';
+  let h = `<div class="card"><div class="problem"><span class="eq">${eqHTML(p.skeleton)}</span>
+      ${medBadge(p)}${p.meta.level ? `<span class="badge lvl">Level ${p.meta.level}</span>` : ''}</div>
+      <div class="small muted">Work through the steps in order. Each step unlocks when the one before it is right.</div></div>`;
+
+  // ---- Step 1: oxidation numbers + identification
+  const s1done = C.on.done && C.id.done;
+  {
+    const sps = uniqueSpecies(p);
+    let rows = sps.map((s, i) => `<tr><td class="sp">${spHTML(s.text)}</td><td>${Object.keys(s.comp).map(el => {
+      const id = `on-${i}-${el}`; const mark = C.on.marks[id] || '';
+      return `<span class="oncell"><b>${el}</b><input type="text" id="${id}" class="${mark}" value="${esc(C.vals[id] || '')}" ${C.on.done ? 'disabled' : ''} autocomplete="off"></span>`;
+    }).join('')}</td></tr>`).join('');
+    let body = `<div class="instr">Enter the oxidation number of each element in each species (use <code>+3</code>, <code>-2</code>, <code>0</code>; averages like <code>8/3</code> are fine).</div>
+      <table class="on">${rows}</table>
+      <div class="row"><button class="btn" id="on-check" ${C.on.done ? 'disabled' : ''}>Check oxidation numbers</button></div>
+      <div id="on-fb">${C.on.fb || ''}</div>`;
+    if (C.on.done) {
+      const els = [...new Set(sps.flatMap(s => Object.keys(s.comp)))];
+      const reacts = p.R;
+      const cb = (name, items, lab) => items.map(it => {
+        const v = typeof it === 'string' ? it : it.key; const id = `${name}-${v}`;
+        return `<label><input type="checkbox" id="${esc(id)}" data-group="${name}" value="${esc(v)}" ${C.vals[id] ? 'checked' : ''} ${C.id.done ? 'disabled' : ''}> ${lab(it)}</label>`;
+      }).join('');
+      body += `<h3>Who is oxidized, who is reduced?</h3>
+        <div class="instr">Check every answer that applies.</div>
+        <div class="idgrid">
+          <div><span class="oxt">Oxidized</span> element(s) <span class="small muted">(oxidation number goes up)</span></div><div>${cb('idox', els, e => e)}</div>
+          <div><span class="redt">Reduced</span> element(s) <span class="small muted">(oxidation number goes down)</span></div><div>${cb('idred', els, e => e)}</div>
+          <div>Oxidizing agent(s) <span class="small muted">(the reactant that gets reduced)</span></div><div>${cb('idoa', reacts, s => spHTML(s.text))}</div>
+          <div>Reducing agent(s) <span class="small muted">(the reactant that gets oxidized)</span></div><div>${cb('idra', reacts, s => spHTML(s.text))}</div>
+        </div>
+        <div class="row"><button class="btn" id="id-check" ${C.id.done ? 'disabled' : ''}>Check</button></div>
+        <div id="id-fb">${C.id.fb || ''}</div>`;
+    }
+    h += stepCard(1, 'Assign oxidation numbers', s1done ? 'done' : '', body);
+  }
+
+  // ---- Step 2: split
+  const s2state = !s1done ? 'locked' : C.split.done ? 'done' : '';
+  {
+    const body = `<div class="instr">Write the two skeleton half-reactions. Use only the species from the equation, no coefficients needed yet.
+        The oxidation half has the species whose element is oxidized; the reduction half has the species whose element is reduced.</div>
+      <div class="split2">
+        <div><b class="oxt">Oxidation half-reaction</b>${eqBox('split-ox', C.vals['split-ox'], { inv: false, disabled: C.split.done, placeholder: 'e.g. Fe^2+ -> Fe^3+' })}<div>${C.split.fb.ox || ''}</div></div>
+        <div><b class="redt">Reduction half-reaction</b>${eqBox('split-red', C.vals['split-red'], { inv: false, disabled: C.split.done, placeholder: 'e.g. MnO4^- -> Mn^2+' })}<div>${C.split.fb.red || ''}</div></div>
+      </div>
+      <div class="row"><button class="btn" id="split-check" ${C.split.done ? 'disabled' : ''}>Check</button>
+      ${C.split.tries >= 3 && !C.split.done ? '<button class="btn secondary small" id="split-show">Show me</button>' : ''}</div>`;
+    h += stepCard(2, 'Split into two half-reactions', s2state, body);
+  }
+
+  // ---- Steps 3–6: balance each half
+  const halvesDone = C.half.ox.stage > 6 && C.half.red.stage > 6;
+  const s36state = !C.split.done ? 'locked' : halvesDone ? 'done' : '';
+  {
+    const skipText = (hh, name) => hh.noOH ? `The ${name} half has no O or H, so it skips steps 4 and 5.` : hh.noO ? `The ${name} half has no O, so it skips step 4 (no H₂O needed).` : '';
+    const skipNote = p.noOH ? ' There is no O or H anywhere in this reaction, so steps 4 and 5 are skipped: no H₂O or H⁺ is needed.'
+      : [skipText(p.oxHalf, 'oxidation'), skipText(p.redHalf, 'reduction')].filter(x => x).map(x => ' ' + x).join('');
+    const body = `<div class="instr">Balance each half-reaction separately, one step at a time${p.noOH ? '' : `, as if the solution were acidic${basic ? ' (you will switch to basic at the end)' : ''}`}.${skipNote}
+      The table under the box counts atoms and charge on each side as you type.</div>
+      <div class="halves">${halfColumn('ox')}${halfColumn('red')}</div>`;
+    h += stepCard('3–6', 'Balance each half-reaction', s36state, body);
+  }
+
+  // ---- Step 7: equalize electrons
+  const s7state = !halvesDone ? 'locked' : C.mult.done ? 'done' : '';
+  {
+    let body = '';
+    if (halvesDone) {
+      const ho = C.half.ox, hr = C.half.red;
+      body = `<div class="instr">Multiply each half-reaction by a whole number so that the electrons lost in oxidation equal the electrons gained in reduction.</div>
+        <div class="multline"><input type="number" min="1" id="m-ox" value="${esc(C.vals['m-ox'] || '')}" ${C.mult.done ? 'disabled' : ''}> × <span class="eq">${eqHTML(ho.acc[6])}</span> <span class="small muted">(${ho.electrons} e⁻ lost)</span></div>
+        <div class="multline"><input type="number" min="1" id="m-red" value="${esc(C.vals['m-red'] || '')}" ${C.mult.done ? 'disabled' : ''}> × <span class="eq">${eqHTML(hr.acc[6])}</span> <span class="small muted">(${hr.electrons} e⁻ gained)</span></div>
+        <div class="row"><button class="btn" id="mult-check" ${C.mult.done ? 'disabled' : ''}>Check</button>
+        ${C.mult.tries >= 3 && !C.mult.done ? '<button class="btn secondary small" id="mult-show">Show me</button>' : ''}</div>
+        <div id="mult-fb">${C.mult.fb || ''}</div>`;
+    }
+    h += stepCard(7, 'Make electrons lost = electrons gained', s7state, body);
+  }
+
+  // ---- Step 8: add and cancel
+  const s8state = !C.mult.done ? 'locked' : C.sum.done ? 'done' : '';
+  {
+    let body = '';
+    if (C.mult.done) {
+      body = `<div class="instr">Add the multiplied half-reactions. Cancel the electrons${p.noOH ? '' : ', and cancel any H₂O or H⁺ that appears on both sides'}. Type the overall equation.</div>
+        <div style="margin:6px 0 10px"><div class="eq">${eqHTML(C.mult.oxText)}</div><div class="eq">${eqHTML(C.mult.redText)}</div></div>
+        ${eqBox('sum-in', C.vals['sum-in'], { disabled: C.sum.done })}
+        <div class="row"><button class="btn" id="sum-in-check" ${C.sum.done ? 'disabled' : ''}>Check</button></div>
+        <div id="sum-fb">${C.sum.fb || ''}</div>`;
+    }
+    h += stepCard(8, 'Add the half-reactions and cancel', s8state, body);
+  }
+
+  // ---- Step 9: basic
+  if (basic) {
+    const s9state = !C.sum.done ? 'locked' : C.basic.done ? 'done' : '';
+    let body = '';
+    if (C.sum.done) {
+      const hp = p.acid.vec[KEY_HP] || 0;
+      const n = Math.abs(hp), side = hp > 0 ? 'left' : 'right';
+      body = `<div class="instr">The reaction runs in basic solution, so the final equation can't contain H⁺.</div>
+        <ol class="small">
+          <li>Count the H⁺ in your equation${n ? '' : ' (there are none, so nothing changes!)'}. Add the same number of OH⁻ to <b>both</b> sides.</li>
+          <li>On the side with H⁺, combine each H⁺ + OH⁻ into H₂O.</li>
+          <li>Cancel H₂O that appears on both sides.</li>
+        </ol>
+        <div class="eq" style="margin-bottom:8px">${eqHTML(C.vals['sum-in'] || p.acidText)}</div>
+        ${eqBox('basic-in', C.vals['basic-in'], { disabled: C.basic.done })}
+        <div class="row"><button class="btn" id="basic-in-check" ${C.basic.done ? 'disabled' : ''}>Check</button></div>
+        <div id="basic-fb">${C.basic.fb || ''}</div>`;
+    }
+    h += stepCard(9, 'Convert to basic solution', s9state, body);
+  }
+
+  // ---- Done
+  const allDone = basic ? C.basic.done : C.sum.done;
+  if (allDone) {
+    const sp = s => s.map(k => spHTML(p.byKey[k].text)).join(', ');
+    h += `<div class="donebox"><h2 style="margin:0 0 4px">Balanced!</h2>
+      <div class="final eq">${eqHTML(p.answerText)}</div>
+      <div><b>Electrons transferred:</b> ${p.acid.eTransferred} &nbsp;·&nbsp; <b>Oxidizing agent:</b> ${sp(p.oxidizingAgents)} &nbsp;·&nbsp; <b>Reducing agent:</b> ${sp(p.reducingAgents)}</div>
+      <div class="row"><button class="btn" id="c-next">Next problem</button></div></div>`;
+  }
+
+  $('coach-steps').innerHTML = h;
+  wireCoach();
+}
+
+const STAGE = {
+  3: ['Balance atoms other than O and H', 'Change coefficients only. Don\'t add anything yet.', 3],
+  4: ['Balance O by adding H₂O', 'Add H₂O to the side that needs oxygen.', 4],
+  5: ['Balance H by adding H⁺', 'Add H⁺ to the side that needs hydrogen.', 5],
+  6: ['Balance charge by adding electrons', 'Add e^- to the more positive side.', 6],
+};
+function halfColumn(t) {
+  const hs = C.half[t];
+  let h = `<div class="halfcol ${t}"><h3>${t === 'ox' ? 'Oxidation' : 'Reduction'} half-reaction</h3>`;
+  for (const st of [3, 4, 5, 6]) {
+    const [title, tip] = STAGE[st];
+    if (hs.skipped && hs.skipped[st]) {
+      h += `<div class="substep future"><div class="t">Step ${st}. ${title}: not needed</div><div class="small">${st === 4 ? 'No O in this half-reaction, so no H₂O.' : 'No O or H in this half-reaction.'}</div></div>`;
+    } else if (hs.acc[st] !== undefined) {
+      h += `<div class="substep"><div class="t">Step ${st}. ${title} <span class="tick">✓</span></div><div class="done-eq eq">${eqHTML(hs.acc[st])}</div></div>`;
+    } else if (hs.stage === st && C.split.done) {
+      const id = `h-${t}-${st}`;
+      const val = C.vals[id] !== undefined ? C.vals[id] : (st === 3 ? C.split.acc[t] : hs.acc[st - 1]);
+      C.vals[id] = val;
+      h += `<div class="substep"><div class="t">Step ${st}. ${title}</div><div class="small muted">${tip}</div>
+        ${eqBox(id, val, { focus: st })}
+        <div class="row"><button class="btn small" id="${id}-check">Check</button></div>
+        <div>${hs.fb || ''}</div></div>`;
+    } else {
+      h += `<div class="substep future"><div class="t">Step ${st}. ${title}</div></div>`;
+    }
+  }
+  if (hs.stage > 6) h += `<div class="small" style="margin-top:4px"><b>${hs.electrons}</b> electron${hs.electrons === 1 ? '' : 's'} ${t === 'ox' ? 'lost' : 'gained'}.</div>`;
+  return h + '</div>';
+}
+
+function checkSplit(input, half) {
+  let eq;
+  try { eq = parseEquation(input); } catch (e) { return { ok: false, msg: e.message }; }
+  const skel = new Set([...half.R, ...half.P].map(s => s.key));
+  const ignore = k => [KEY_H2O, KEY_HP, KEY_OH, KEY_E].includes(k) && !skel.has(k);
+  const L = new Set(eq.left.map(t => t.sp.key).filter(k => !ignore(k)));
+  const R = new Set(eq.right.map(t => t.sp.key).filter(k => !ignore(k)));
+  const wantL = new Set(half.R.map(s => s.key)), wantR = new Set(half.P.map(s => s.key));
+  const same = (a, b) => a.size === b.size && [...a].every(x => b.has(x));
+  if (same(L, wantL) && same(R, wantR)) return { ok: true, L, R };
+  return { ok: false, L, R, eq };
+}
+
+function wireCoach() {
+  const root = $('coach-steps'), p = C.prob;
+  bindEqBoxes(root, C.vals);
+  root.querySelectorAll('input[type=text]:not(.eqin), input[type=number]').forEach(i => i.addEventListener('input', () => { C.vals[i.id] = i.value; }));
+  root.querySelectorAll('input[type=checkbox]').forEach(i => i.addEventListener('change', () => { C.vals[i.id] = i.checked; }));
+  const on = (id, f) => { const el = $(id); if (el) el.onclick = f; };
+
+  // Step 1a
+  on('on-check', () => {
+    const sps = uniqueSpecies(p); let wrong = 0, blank = 0, unreadable = 0; C.on.marks = {};
+    sps.forEach((s, i) => Object.keys(s.comp).forEach(el => {
+      const id = `on-${i}-${el}`; const raw = C.vals[id] || '';
+      const v = parseONInput(raw);
+      if (v === null) blank++;
+      if (v === undefined) unreadable++;
+      const ok = v && onMatches(v, s.on[el]);
+      C.on.marks[id] = ok ? 'right' : 'wrong';
+      if (!ok) wrong++;
+    }));
+    if (!wrong) { C.on.done = true; C.on.fb = fbHTML('ok', ['All oxidation numbers are right.']); renderCoach(); return; }
+    C.on.tries++;
+    const msgs = [`${wrong} oxidation number${wrong > 1 ? 's are' : ' is'} not right yet (marked in red).`];
+    if (blank) msgs.push(`${blank} box${blank > 1 ? 'es are' : ' is'} empty.`);
+    if (unreadable) msgs.push('Some entries could not be read. Use forms like +3, -2, 0 or 8/3.');
+    const rule = C.on.tries >= 2 ? 'Free elements are 0. Monatomic ions equal their charge. F is −1; group 1 metals +1; group 2 metals +2; H is +1 (−1 with metals); O is −2 (−1 in peroxides). The oxidation numbers add up to the charge of the species.' : '';
+    C.on.fb = fbHTML('bad', msgs, rule, C.on.tries >= 3 ? '<div class="row"><button class="btn secondary small" id="on-show">Show me</button></div>' : '');
+    renderCoach();
+  });
+  on('on-show', () => {
+    uniqueSpecies(p).forEach((s, i) => Object.keys(s.comp).forEach(el => { const id = `on-${i}-${el}`; C.vals[id] = onFmt(s.on[el]).replace('−', '-'); C.on.marks[id] = 'right'; }));
+    C.on.done = true; C.on.fb = fbHTML('hint', ['Here are the oxidation numbers. Compare each one with what you had.']); renderCoach();
+  });
+
+  // Step 1b
+  on('id-check', () => {
+    const got = g => new Set([...root.querySelectorAll(`input[data-group=${g}]`)].filter(i => i.checked).map(i => i.value));
+    const same = (a, b) => a.size === b.length && b.every(x => a.has(x));
+    const msgs = [];
+    if (!same(got('idox'), p.oxidizedEls)) msgs.push('Oxidized element(s): not right. Find the element whose oxidation number goes up from reactant to product.');
+    if (!same(got('idred'), p.reducedEls)) msgs.push('Reduced element(s): not right. Find the element whose oxidation number goes down.');
+    if (!same(got('idoa'), p.oxidizingAgents)) msgs.push('Oxidizing agent: not right. It is the reactant that contains the element being reduced.');
+    if (!same(got('idra'), p.reducingAgents)) msgs.push('Reducing agent: not right. It is the reactant that contains the element being oxidized.');
+    if (!msgs.length) { C.id.done = true; C.id.fb = fbHTML('ok', ['Right. Now split the reaction into its two halves.']); renderCoach(); return; }
+    C.id.tries++;
+    const rule = C.id.tries >= 2 ? 'Oxidation is loss of electrons (oxidation number increases). Reduction is gain of electrons (oxidation number decreases). The oxidizing agent is reduced; the reducing agent is oxidized.' : '';
+    C.id.fb = fbHTML('bad', msgs, rule, C.id.tries >= 3 ? '<div class="row"><button class="btn secondary small" id="id-show">Show me</button></div>' : '');
+    renderCoach();
+  });
+  on('id-show', () => {
+    root.querySelectorAll('input[type=checkbox]').forEach(i => {
+      const g = i.dataset.group, v = i.value;
+      const want = g === 'idox' ? p.oxidizedEls : g === 'idred' ? p.reducedEls : g === 'idoa' ? p.oxidizingAgents : p.reducingAgents;
+      C.vals[i.id] = want.includes(v);
+    });
+    C.id.done = true; C.id.fb = fbHTML('hint', ['Here are the answers.']); renderCoach();
+  });
+
+  // Step 2
+  on('split-check', () => {
+    const fb = {}; let allOK = true;
+    for (const t of ['ox', 'red']) {
+      const half = t === 'ox' ? p.ox : p.red, other = t === 'ox' ? p.red : p.ox;
+      const r = checkSplit(C.vals['split-' + t] || '', half);
+      if (r.ok) { fb[t] = fbHTML('ok', ['✓']); continue; }
+      allOK = false;
+      if (r.msg) { fb[t] = fbHTML('bad', [r.msg]); continue; }
+      if (checkSplit(C.vals['split-' + t] || '', other).ok) { fb[t] = fbHTML('bad', [`That's the ${t === 'ox' ? 'reduction' : 'oxidation'} half-reaction. Put it in the other box.`]); continue; }
+      const msgs = [];
+      const named = k => p.byKey[k] ? p.byKey[k].text : k;
+      for (const s of half.R) if (!r.L.has(s.key)) msgs.push(`${s.text} belongs on the left of this half.`);
+      for (const s of half.P) if (!r.R.has(s.key)) msgs.push(`${s.text} belongs on the right of this half.`);
+      const all = new Set([...half.R, ...half.P].map(s => s.key));
+      for (const k of [...r.L, ...r.R]) if (!all.has(k)) msgs.push(p.byKey[k] ? `${named(k)} doesn't belong in this half.` : `Something in this half isn't in the skeleton equation.`);
+      if (!msgs.length) msgs.push('Each species should appear once, on the same side as in the skeleton equation.');
+      fb[t] = fbHTML('bad', msgs);
+    }
+    if (allOK) {
+      C.split.done = true;
+      C.split.acc = { ox: C.vals['split-ox'], red: C.vals['split-red'] };
+    } else {
+      C.split.tries++;
+      if (C.split.tries >= 2) fb.ox = (fb.ox || '') + `<div class="fb hint"><b>Rule:</b> Each half-reaction contains one element that changes oxidation number (here: ${p.oxidizedEls.join(', ')} oxidized; ${p.reducedEls.join(', ')} reduced). Put each reactant with the product that contains the same element.</div>`;
+    }
+    C.split.fb = fb; renderCoach();
+  });
+  on('split-show', () => {
+    const txt = half => half.R.map(s => s.text).join(' + ') + ' -> ' + half.P.map(s => s.text).join(' + ');
+    C.vals['split-ox'] = txt(p.ox); C.vals['split-red'] = txt(p.red);
+    C.split.done = true; C.split.acc = { ox: C.vals['split-ox'], red: C.vals['split-red'] };
+    C.split.fb = { ox: fbHTML('hint', ['Here is the oxidation half.']), red: fbHTML('hint', ['Here is the reduction half.']) };
+    renderCoach();
+  });
+
+  // Steps 3–6
+  for (const t of ['ox', 'red']) {
+    const hs = C.half[t], st = hs.stage, id = `h-${t}-${st}`;
+    const solved = t === 'ox' ? p.oxHalf : p.redHalf;
+    on(id + '-check', () => {
+      const val = C.vals[id] || '';
+      const r = checkHalf(val, solved, st);
+      if (r.ok) {
+        hs.acc[st] = val; hs.stage = st + 1; hs.fb = r.note ? fbHTML('ok', [r.note]) : '';
+        // skip steps that can't apply: 4 needs O in the half; 5 needs O or H
+        hs.skipped = hs.skipped || {};
+        while (hs.stage <= 5 && ((hs.stage === 4 && solved.noO) || (hs.stage === 5 && solved.noOH))) {
+          hs.skipped[hs.stage] = true; hs.acc[hs.stage] = val; hs.stage++;
+        }
+        if (st === 6) { hs.electrons = r.electrons; hs.vec = r.vec; hs.sp = r.sp; }
+      } else {
+        hs.tries[st] = (hs.tries[st] || 0) + 1;
+        hs.fb = ladderFB(r, hs.tries[st], id + '-show');
+      }
+      renderCoach();
+    });
+    on(id + '-show', () => { C.vals[id] = halfStage(solved, st); hs.fb = fbHTML('hint', ['Here is this step. Compare it with yours, then click Check.']); renderCoach(); });
+  }
+
+  // Step 7
+  on('mult-check', () => {
+    const mo = parseInt(C.vals['m-ox'], 10), mr = parseInt(C.vals['m-red'], 10);
+    const eo = C.half.ox.electrons, er = C.half.red.electrons;
+    if (!(mo >= 1) || !(mr >= 1) || String(mo) !== String(C.vals['m-ox']).trim() || String(mr) !== String(C.vals['m-red']).trim()) {
+      C.mult.fb = fbHTML('bad', ['Enter a whole number (1 or more) in each box.']); renderCoach(); return;
+    }
+    if (mo * eo !== mr * er) {
+      C.mult.tries++;
+      C.mult.fb = fbHTML('bad', [`Electrons lost: ${mo} × ${eo} = ${mo * eo}. Electrons gained: ${mr} × ${er} = ${mr * er}. These must be equal.`],
+        C.mult.tries >= 2 ? 'Use the least common multiple of the two electron counts.' : '');
+      renderCoach(); return;
+    }
+    const L = eo * er / gcdUI(eo, er);
+    const note = mo * eo > L ? ` That works. Smaller multipliers (${L / eo} and ${L / er}) would also work.` : '';
+    C.mult.done = true; C.mult.fb = fbHTML('ok', [`${mo * eo} electrons lost = ${mr * er} electrons gained.${note}`]);
+    C.mult.oxText = scaledText(C.half.ox, mo); C.mult.redText = scaledText(C.half.red, mr);
+    renderCoach();
+  });
+  on('mult-show', () => {
+    const eo = C.half.ox.electrons, er = C.half.red.electrons, L = eo * er / gcdUI(eo, er);
+    C.vals['m-ox'] = String(L / eo); C.vals['m-red'] = String(L / er); renderCoach();
+  });
+
+  // Step 8
+  on('sum-in-check', () => {
+    const r = checkOverall(C.vals['sum-in'] || '', p, 'acidic');
+    if (r.ok) { C.sum.done = true; C.sum.fb = fbHTML('ok', [r.note || (p.medium === 'basic' ? 'Right, balanced in acid. One more step for basic solution.' : 'Right!')]); }
+    else { C.sum.tries++; C.sum.fb = ladderFB(r, C.sum.tries, 'sum-show'); }
+    renderCoach();
+  });
+  on('sum-show', () => { C.vals['sum-in'] = p.acidText; C.sum.fb = fbHTML('hint', ['Here is the overall equation in acid. Click Check to continue.']); renderCoach(); });
+
+  // Step 9
+  on('basic-in-check', () => {
+    const r = checkOverall(C.vals['basic-in'] || '', p, 'basic');
+    if (r.ok) { C.basic.done = true; C.basic.fb = fbHTML('ok', [r.note || 'Right!']); }
+    else { C.basic.tries++; C.basic.fb = ladderFB(r, C.basic.tries, 'basic-show'); }
+    renderCoach();
+  });
+  on('basic-show', () => { C.vals['basic-in'] = p.basic ? vecToString(p.basic.vec, p.basic.sp, p.basic.order) : ''; C.basic.fb = fbHTML('hint', ['Here is the equation in basic solution. Click Check to finish.']); renderCoach(); });
+
+  on('c-next', () => {
+    const list = PROBLEMS.filter(q => (C.level === 'all' || q.level == C.level) && q.id !== C.pid);
+    if (list.length) startCoach(list[Math.floor(Math.random() * list.length)]);
+  });
+}
+function gcdUI(a, b) { while (b) { [a, b] = [b, a % b]; } return a; }
+function scaledText(hs, m) {
+  const vec = {}; for (const k in hs.vec) vec[k] = hs.vec[k] * m;
+  return vecToString(vec, hs.sp, Object.keys(hs.vec));
+}
+
+// ======================================================
+//                      TESTING
+// ======================================================
+const T = { level: 'all', prob: null, meta: null, tries: 0, solved: false, attempted: 0, correct: 0, firstTry: 0, val: '', fb: '' };
+function newTest(p) {
+  if (!p) {
+    const pool = PROBLEMS.filter(q => (T.level === 'all' || q.level == T.level) && (!T.meta || q.id !== T.meta.id));
+    if (!pool.length) { T.prob = null; renderTest(); return; }
+    p = pool[Math.floor(Math.random() * pool.length)];
+  }
+  try { T.prob = solveProblem(p.eq, p.medium); } catch (e) { T.prob = null; }
+  T.meta = p; T.tries = 0; T.solved = false; T.val = ''; T.fb = ''; T.counted = false;
+  renderTest();
+}
+function renderTest() {
+  const el = $('tab-test');
+  let h = `<div class="card"><h2>Testing</h2>
+    <div class="instr">Balance the whole equation and type it in. Unlimited tries. After a wrong try you get a hint, then the rule, then the answer is offered.</div>
+    ${levelChips(T.level, 'data-tlevel')}
+    <div class="score">Solved: ${T.correct} of ${T.attempted} attempted · first try: ${T.firstTry}</div></div>`;
+  if (T.prob) {
+    const p = T.prob;
+    h += `<div class="card">
+      <div class="problem"><span class="eq">${eqHTML(p.skeleton)}</span>${medBadge(p)}<span class="badge lvl">Level ${T.meta.level} · ${esc(T.meta.id)}</span></div>
+      <div class="invtoggle"><label><input type="checkbox" id="t-inv" ${showInventory ? 'checked' : ''}> Show the atom and charge count as I type</label></div>
+      ${eqBox('t-in', T.val, { disabled: T.solved })}
+      <div class="row"><button class="btn" id="t-in-check" ${T.solved ? 'disabled' : ''}>Check</button>
+        <button class="btn secondary" id="t-next">${T.solved ? 'Next problem' : 'Skip'}</button>
+        <button class="btn secondary" id="t-coach">Coach me through this one</button></div>
+      <div id="t-fb">${T.fb}</div></div>`;
+  } else h += `<div class="card">No problems at this level.</div>`;
+  el.innerHTML = h;
+  el.querySelectorAll('[data-tlevel]').forEach(b => b.onclick = () => { T.level = b.dataset.tlevel; T.meta = null; newTest(); });
+  bindEqBoxes(el);
+  const inp = $('t-in'); if (inp) inp.addEventListener('input', () => { T.val = inp.value; });
+  const tinv = $('t-inv'); if (tinv) tinv.onchange = () => { showInventory = tinv.checked; updateEqBox($('t-in')); };
+  const ck = $('t-in-check'); if (ck) ck.onclick = () => {
+    if (!T.counted) { T.attempted++; T.counted = true; }
+    const r = checkOverall(T.val, T.prob, T.prob.medium);
+    if (r.ok) {
+      T.solved = true; T.correct++; if (T.tries === 0) T.firstTry++;
+      T.fb = fbHTML('ok', [(T.tries === 0 ? 'Correct on the first try! ' : 'Correct! ') + (r.note || '')]);
+    } else {
+      T.tries++;
+      T.fb = ladderFB(r, T.tries, 't-show');
+    }
+    renderTest();
+  };
+  const sh = $('t-show'); if (sh) sh.onclick = () => {
+    T.fb = fbHTML('hint', ['Answer:'], '', `<div class="final eq">${eqHTML(T.prob.answerText)}</div><div class="small">Half-reactions: <span class="eq" style="font-size:15px">${eqHTML(halfStage(T.prob.oxHalf, 6))}</span> &nbsp;and&nbsp; <span class="eq" style="font-size:15px">${eqHTML(halfStage(T.prob.redHalf, 6))}</span></div>`);
+    T.solved = true; renderTest();
+  };
+  const nx = $('t-next'); if (nx) nx.onclick = () => newTest();
+  const co = $('t-coach'); if (co) co.onclick = () => { showTab('coach'); startCoach(T.meta); };
+}
+
+// ======================================================
+//                      REVIEW
+// ======================================================
+function workedHTML(skel, medium) {
+  const p = solveProblem(skel, medium);
+  const onList = s => Object.keys(s.comp).map(e => `${e} ${onFmt(s.on[e])}`).join(', ');
+  const changes = [];
+  for (const e of p.oxidizedEls) changes.push(`<span class="oxt">${e} is oxidized</span>`);
+  for (const e of p.reducedEls) changes.push(`<span class="redt">${e} is reduced</span>`);
+  const sk = h => h.R.map(s => s.text).join(' + ') + ' -> ' + h.P.map(s => s.text).join(' + ');
+  let h = `<div class="problem"><span class="eq">${eqHTML(skel)}</span><span class="badge ${p.medium}">${p.medium} solution</span></div><table class="worked">`;
+  h += `<tr><td>1. Oxidation numbers</td><td>${uniqueSpecies(p).map(s => `${spHTML(s.text)}: ${onList(s)}`).join('<br>')}<br>${changes.join('; ')}.</td></tr>`;
+  h += `<tr><td>2. Split</td><td><span class="oxt">Ox:</span> ${eqSpan(sk(p.ox))}<br><span class="redt">Red:</span> ${eqSpan(sk(p.red))}</td></tr>`;
+  for (const st of [3, 4, 5, 6]) {
+    const skip = hh => (st === 4 && hh.noO) || (st === 5 && hh.noOH);
+    if (skip(p.oxHalf) && skip(p.redHalf)) continue;
+    const cell = hh => skip(hh) ? '<span class="muted">not needed</span>' : eqSpan(halfStage(hh, st));
+    h += `<tr><td>${st}. ${STAGE[st][0]}</td><td><span class="oxt">Ox:</span> ${cell(p.oxHalf)}<br><span class="redt">Red:</span> ${cell(p.redHalf)}</td></tr>`;
+  }
+  const L = p.oxHalf.electrons * p.acid.mo;
+  h += `<tr><td>7. Equalize electrons</td><td>Oxidation × ${p.acid.mo}, reduction × ${p.acid.mr} → ${L} electrons each way.</td></tr>`;
+  h += `<tr><td>8. Add and cancel</td><td>${eqSpan(p.acidText)}</td></tr>`;
+  if (p.medium === 'basic') {
+    const n = Math.abs(p.acid.vec[KEY_HP] || 0);
+    h += `<tr><td>9. Convert to basic</td><td>Add ${n} OH⁻ to both sides; ${n} H⁺ + ${n} OH⁻ → ${n} H₂O; cancel water:<br>${eqSpan(vecToString(p.basic.vec, p.basic.sp, p.basic.order))}</td></tr>`;
+  }
+  h += `<tr><td>Check</td><td>Atoms and charge balance on both sides. ✓</td></tr></table>`;
+  return h;
+}
+function renderReview() {
+  $('tab-review').innerHTML = `
+  <div class="card"><h2>Redox in one paragraph</h2>
+    <p>In an oxidation–reduction (redox) reaction, electrons move from one species to another. The species that <b class="oxt">loses electrons is oxidized</b>, and the oxidation number of one of its elements goes up. The species that <b class="redt">gains electrons is reduced</b>, and the oxidation number of one of its elements goes down. The species that is reduced is the <b>oxidizing agent</b>; the species that is oxidized is the <b>reducing agent</b>. A balanced redox equation must balance <b>atoms</b> and <b>charge</b>, and electrons lost must equal electrons gained.</p></div>
+  <div class="card"><h2>Oxidation number rules</h2>
+    <table class="rules"><tr><th>Rule</th><th>Examples</th></tr>
+    <tr><td>An element by itself has oxidation number 0.</td><td>Cu, O₂, Cl₂, P₄ are all 0</td></tr>
+    <tr><td>A monatomic ion's oxidation number equals its charge.</td><td>Fe³⁺ is +3, Cl⁻ is −1</td></tr>
+    <tr><td>F is always −1. Group 1 metals are +1; group 2 metals are +2.</td><td>Na in NaCl is +1</td></tr>
+    <tr><td>H is +1 with nonmetals, −1 with metals.</td><td>H in H₂O is +1; in NaH it is −1</td></tr>
+    <tr><td>O is usually −2 (−1 in peroxides, +2 in OF₂).</td><td>O in H₂O₂ is −1</td></tr>
+    <tr><td>The oxidation numbers add up to the charge of the species.</td><td>MnO₄⁻: Mn + 4(−2) = −1, so Mn is +7</td></tr>
+    <tr><td>If an element appears more than once, the answer can be an average.</td><td>Fe in Fe₃O₄ is +8/3; C in C₂H₅OH is −2</td></tr></table></div>
+  <div class="card"><h2>The half-reaction method</h2>
+    <ol class="method">
+      <li><b>Assign oxidation numbers.</b> Find what is oxidized and what is reduced.</li>
+      <li><b>Split</b> the skeleton equation into an oxidation half-reaction and a reduction half-reaction.</li>
+      <li>In each half, <b>balance the atoms other than O and H</b> by changing coefficients.</li>
+      <li><b>Balance O</b> by adding H₂O.</li>
+      <li><b>Balance H</b> by adding H⁺.</li>
+      <li><b>Balance charge</b> by adding electrons (to the right in oxidation, to the left in reduction).</li>
+      <li><b>Multiply</b> each half so that electrons lost = electrons gained.</li>
+      <li><b>Add</b> the half-reactions and <b>cancel</b> electrons and anything that appears on both sides.</li>
+      <li><b>Basic solution only:</b> add as many OH⁻ to both sides as there are H⁺, combine H⁺ + OH⁻ → H₂O, and cancel water.</li>
+    </ol>
+    <p class="muted small">Always finish by checking that atoms and charge balance.</p></div>
+  <div class="card"><h2>Worked example 1: acidic solution</h2>${workedHTML('MnO4^- + Fe^2+ -> Mn^2+ + Fe^3+', 'acidic')}</div>
+  <div class="card"><h2>Worked example 2: basic solution</h2>${workedHTML('MnO4^- + I^- -> MnO2 + I2', 'basic')}</div>
+  <div class="card"><h2>How to type equations</h2>
+    <table class="typing">
+      <tr><td>Subscripts</td><td>just type the number: <code>Cr2O7</code></td><td>${spHTML('Cr2O7')}</td></tr>
+      <tr><td>Charges</td><td>after <code>^</code>: <code>Fe^3+</code>, <code>SO4^2-</code>, <code>MnO4^-</code></td><td>${spHTML('Fe^3+')}, ${spHTML('SO4^2-')}, ${spHTML('MnO4^-')}</td></tr>
+      <tr><td>Electrons</td><td><code>e^-</code></td><td>${spHTML('e^-')}</td></tr>
+      <tr><td>Coefficients</td><td>in front: <code>8H^+</code>, <code>4H2O</code></td><td>${eqHTML('8H^+')}, ${eqHTML('4H2O')}</td></tr>
+      <tr><td>Arrow</td><td><code>-&gt;</code></td><td>→</td></tr>
+      <tr><td>Between species</td><td><code> + </code> with spaces around it</td><td></td></tr>
+    </table>
+    <p class="small muted">Watch out: <code>Fe3+</code> without the <code>^</code> reads as Fe₃⁺. The "Reads as" line under every box shows how your typing was understood.</p></div>`;
+}
+
+// ======================================================
+//                      INSTRUCTOR
+// ======================================================
+let staged = [];
+function parseTable(text) {
+  const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim());
+  if (!lines.length) return [];
+  const delim = lines[0].includes('\t') ? '\t' : ',';
+  const cells = l => l.split(delim).map(c => c.trim().replace(/^"(.*)"$/, '$1'));
+  const head = cells(lines[0]).map(h => h.toLowerCase());
+  const col = n => head.indexOf(n);
+  if (col('equation') < 0) throw new Error('The first row must be a header with the columns id, level, equation, medium.');
+  return lines.slice(1).map((l, i) => {
+    const c = cells(l);
+    return { row: i + 2, id: c[col('id')] || '', level: c[col('level')] || '', eq: c[col('equation')] || '', medium: (c[col('medium')] || '').toLowerCase() };
+  });
+}
+function validateRows(rows) {
+  const ids = new Set();
+  return rows.map(r => {
+    const errs = [];
+    if (!r.id) errs.push('missing id'); else if (ids.has(r.id)) errs.push('duplicate id'); else ids.add(r.id);
+    const lv = parseInt(r.level, 10);
+    if (!(lv >= 1 && lv <= 5)) errs.push('level must be 1–5');
+    if (r.medium !== 'acidic' && r.medium !== 'basic') errs.push('medium must be acidic or basic');
+    let answer = '';
+    if (!r.eq) errs.push('missing equation');
+    else { try { answer = solveProblem(r.eq, r.medium === 'basic' ? 'basic' : 'acidic').answerText; } catch (e) { errs.push(e.message); } }
+    return { ...r, level: lv, errs, answer };
+  });
+}
+function download(name, text, type = 'text/plain') {
+  try {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type }));
+    a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  } catch (e) { /* some previews block downloads */ }
+  // fallback: show the text so it can be copied
+  const box = $('i-copy');
+  if (box) {
+    box.innerHTML = `<div class="small muted" style="margin-top:10px">If the download didn't start (some previews block downloads), copy this text into a file named <b>${esc(name)}</b>:</div>
+      <textarea readonly style="width:100%;height:140px;font-family:ui-monospace,monospace;font-size:12px">${esc(text)}</textarea>
+      <button class="btn secondary small" id="i-copybtn">Copy</button>`;
+    $('i-copybtn').onclick = async () => { try { await navigator.clipboard.writeText(text); $('i-copybtn').textContent = 'Copied'; } catch (e) { box.querySelector('textarea').select(); } };
+  }
+}
+const csvOf = list => 'id,level,equation,medium\n' + list.map(p => `${p.id},${p.level},${p.eq},${p.medium}`).join('\n') + '\n';
+function renderInstructor() {
+  const up = uploadedProblems();
+  $('tab-instructor').innerHTML = `
+  <div class="card"><h2>Problem bank</h2>
+    <p>Students currently see <b>${PROBLEMS.length}</b> problems (source: ${bankSource}${up.length ? `, plus ${up.length} uploaded in this browser` : ''}).
+    The tool answers every problem itself, so a problem needs only its skeleton equation and whether it runs in acidic or basic solution.</p>
+    <p class="small muted">How to update what students see: edit the spreadsheet → upload it here → fix any flagged rows → <b>Download problems.json</b> → upload <code>problems.json</code> to the GitHub repository, replacing the old one. The page reads that file when it opens.</p>
+    <div class="row"><button class="btn secondary" id="i-template">Download template (.csv)</button>
+    <button class="btn secondary" id="i-current">Download current problems (.csv)</button></div><div id="i-copy"></div></div>
+  <div class="card"><h2>Upload a spreadsheet</h2>
+    <p class="small">Save as <b>.csv</b> or <b>tab-delimited .txt</b>, with the columns <code>id</code>, <code>level</code> (1–5), <code>equation</code>, <code>medium</code> (acidic or basic). Write equations the way students type them, e.g. <code>Cr2O7^2- + Fe^2+ -&gt; Cr^3+ + Fe^3+</code>.</p>
+    <input type="file" id="i-file" accept=".csv,.txt,.tsv">
+    <div id="i-results"></div></div>`;
+  $('i-template').onclick = () => download('redox-problems-template.csv', csvOf([
+    { id: 'MY-001', level: 2, eq: 'MnO4^- + Fe^2+ -> Mn^2+ + Fe^3+', medium: 'acidic' },
+    { id: 'MY-002', level: 3, eq: 'MnO4^- + I^- -> MnO2 + I2', medium: 'basic' }]), 'text/csv');
+  $('i-current').onclick = () => download('redox-problems.csv', csvOf(PROBLEMS), 'text/csv');
+  $('i-file').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const text = await f.text();
+    let rows;
+    try { rows = validateRows(parseTable(text)); } catch (err) { $('i-results').innerHTML = fbHTML('bad', [err.message]); return; }
+    staged = rows;
+    const bad = rows.filter(r => r.errs.length);
+    $('i-results').innerHTML = `<p><b>${rows.length}</b> rows read, <b>${bad.length}</b> with problems.</p>
+      <table class="val"><tr><th>Row</th><th>id</th><th>Lvl</th><th>Equation</th><th>Medium</th><th>Balanced answer / problem</th></tr>
+      ${rows.map(r => `<tr class="${r.errs.length ? 'err' : ''}"><td>${r.row}</td><td>${esc(r.id)}</td><td>${esc(r.level)}</td><td>${eqHTML(r.eq)}</td><td>${esc(r.medium)}</td>
+        <td>${r.errs.length ? esc(r.errs.join('; ')) : eqHTML(r.answer)}</td></tr>`).join('')}</table>
+      <div class="row">
+        <button class="btn" id="i-json" ${bad.length ? 'disabled' : ''}>Download problems.json</button>
+        <button class="btn secondary" id="i-try" ${bad.length ? 'disabled' : ''}>Try these in this browser</button>
+        <button class="btn secondary" id="i-clear">Remove uploaded problems</button>
+        ${bad.length ? '<span class="small muted">Fix the flagged rows and upload again.</span>' : ''}</div>`;
+    const good = () => rows.map(r => ({ id: r.id, level: r.level, medium: r.medium, eq: r.eq }));
+    $('i-json').onclick = () => download('problems.json', JSON.stringify(good(), null, 1), 'application/json');
+    $('i-try').onclick = async () => { try { localStorage.setItem(LS_KEY, JSON.stringify(good())); } catch (e) { } await refreshBank(); $('i-copy').innerHTML = fbHTML('ok', [`${rows.length} problems added in this browser. They now appear in Coaching and Testing.`]); };
+    $('i-clear').onclick = async () => { try { localStorage.removeItem(LS_KEY); } catch (e) { } await refreshBank(); $('i-copy').innerHTML = fbHTML('ok', ['Uploaded problems removed.']); };
+  };
+}
+async function refreshBank() {
+  await loadBank(); renderCoachPick(); renderInstructor(); if (!T.prob) newTest(); else renderTest();
+}
+
+// ======================================================
+//                      TABS / START
+// ======================================================
+function showTab(name) {
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
+}
+document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+(async function start() {
+  await loadBank();
+  renderReview();
+  renderCoachPick();
+  renderCoach();
+  newTest();
+  renderInstructor();
+})();
+
+</script>
+</body>
+</html>
